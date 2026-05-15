@@ -10,6 +10,7 @@ int cmd_audio(int argc, char** argv);
 int cmd_ot(int argc, char** argv, const char* format);
 int cmd_mission(int argc, char** argv);
 int cmd_sh(int argc, char** argv);
+int cmd_cb8(int argc, char** argv);
 
 static void print_usage() {
     puts("ft -- Fighters Toolkit\n");
@@ -45,6 +46,10 @@ static void print_usage() {
     puts("  ft sh info   <file.SH>");
     puts("  ft sh unpack <file.SH> [-o output.obj]");
     puts("");
+    puts("CB8 video commands:");
+    puts("  ft cb8 info   <file.CB8>");
+    puts("  ft cb8 frames <file.CB8> [-o output_dir]");
+    puts("");
     puts("Type file commands (BRF format -- OT/NT/PT/JT/SEE/ECM/GAS):");
     puts("  ft ot  info   <file.OT>  (or pt/nt/jt/see/ecm/gas)");
     puts("  ft ot  unpack <file.OT>  [-o output.txt]");
@@ -64,6 +69,8 @@ int main(int argc, char** argv) {
         return cmd_mission(argc - 1, argv + 1);
     if (strcmp(cmd, "sh") == 0)
         return cmd_sh(argc - 1, argv + 1);
+    if (strcmp(cmd, "cb8") == 0)
+        return cmd_cb8(argc - 1, argv + 1);
     if (strcmp(cmd, "ot")  == 0 || strcmp(cmd, "nt")  == 0 ||
         strcmp(cmd, "pt")  == 0 || strcmp(cmd, "jt")  == 0 ||
         strcmp(cmd, "see") == 0 || strcmp(cmd, "ecm") == 0 ||
