@@ -1,0 +1,36 @@
+#pragma once
+#include <cstdint>
+#include <string>
+#include <vector>
+
+namespace ft {
+
+struct ShVertex { float x, y, z; };
+
+struct ShFace {
+    uint8_t  color;
+    std::string texture;
+    std::vector<uint32_t> indices; // 0-based into ShMesh::vertices
+};
+
+struct ShInfo {
+    int   scale_raw;  // raw scale field from header (8 = 1 foot/unit)
+    float scale;      // multiplier: raw_coord * scale = feet
+    int   vert_count;
+    int   face_count;
+    float bbox[6];    // min_x min_y min_z max_x max_y max_z (in feet)
+    std::vector<std::string> textures;
+};
+
+struct ShMesh {
+    float scale;
+    std::vector<ShVertex>    vertices;
+    std::vector<ShFace>      faces;
+    std::vector<std::string> textures;
+};
+
+ShInfo      sh_parse_info(const uint8_t* data, size_t size);
+ShMesh      sh_parse_mesh(const uint8_t* data, size_t size);
+std::string sh_to_obj(const ShMesh& mesh);
+
+} // namespace ft

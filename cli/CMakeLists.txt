@@ -2,6 +2,11 @@ add_executable(ft
     main.cpp
     cmd_lib.cpp
     cmd_pic.cpp
+    cmd_seq.cpp
+    cmd_audio.cpp
+    cmd_ot.cpp
+    cmd_mission.cpp
+    cmd_sh.cpp
 )
 
 target_link_libraries(ft PRIVATE ft_lib)

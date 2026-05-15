@@ -3,6 +3,12 @@ add_library(ft_lib STATIC
     src/pal.cpp
     src/ealib.cpp
     src/pic.cpp
+    src/seq.cpp
+    src/audio.cpp
+    src/brf.cpp
+    src/ot.cpp
+    src/mission.cpp
+    src/sh.cpp
 )
 
 target_include_directories(ft_lib

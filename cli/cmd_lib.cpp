@@ -27,6 +27,18 @@ static bool write_file(const char* path, const std::vector<uint8_t>& data) {
     return f.good();
 }
 
+// Replace characters illegal in Windows filenames with '_'.
+// The game uses '&' as a prefix for looping audio files; Windows rejects it.
+static std::string sanitize_filename(const char* name) {
+    std::string s = name;
+    for (char& c : s) {
+        if (c == '&' || c == '*' || c == '?' || c == '"' ||
+            c == '<' || c == '>' || c == '|')
+            c = '_';
+    }
+    return s;
+}
+
 static const char* flag_name(uint8_t flags) {
     switch (flags) {
         case 0: return "raw";
@@ -74,7 +86,7 @@ static int cmd_unpack(int argc, char** argv) {
             fail++;
             continue;
         }
-        fs::path dest = out_dir / e.name;
+        fs::path dest = out_dir / sanitize_filename(e.name);
         if (write_file(dest.string().c_str(), data)) {
             printf("  %s -> %s (%zu bytes)\n", e.name, dest.string().c_str(), data.size());
             ok++;
