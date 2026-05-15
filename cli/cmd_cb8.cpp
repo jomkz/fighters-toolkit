@@ -1,7 +1,10 @@
 #include "ft/cb8.h"
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <vector>
+
+namespace fs = std::filesystem;
 
 static std::vector<uint8_t> read_file(const char* path) {
     FILE* f = fopen(path, "rb");
@@ -67,6 +70,8 @@ static int cmd_frames(int argc, char** argv) {
     auto data = read_file(input);
     if (data.empty()) { fprintf(stderr, "Cannot read %s\n", input); return 1; }
 
+    fs::create_directories(outdir);
+
     ft::Cb8Info info;
     if (!ft::cb8_info(data.data(), data.size(), &info)) {
         fprintf(stderr, "Not a valid CB8 file\n");
@@ -83,15 +88,16 @@ static int cmd_frames(int argc, char** argv) {
             fprintf(stderr, "Failed to decode frame %u\n", f);
             continue;
         }
-        char path[1024];
-        snprintf(path, sizeof(path), "%s/frame%04u.pgm", outdir, f);
-        if (write_pgm(path, frame.data(), info.width, info.height))
+        char name[32];
+        snprintf(name, sizeof(name), "frame%04u.pgm", f);
+        auto path = (fs::path(outdir) / name).string();
+        if (write_pgm(path.c_str(), frame.data(), info.width, info.height))
             written++;
         else
-            fprintf(stderr, "Failed to write %s\n", path);
+            fprintf(stderr, "Failed to write %s\n", path.c_str());
     }
     ft::cb8_close(dec);
-    printf("Wrote %u/%u frames to %s/\n", written, info.frame_count, outdir);
+    printf("Wrote %u/%u frames to %s\n", written, info.frame_count, outdir);
     return (written == info.frame_count) ? 0 : 1;
 }
 
