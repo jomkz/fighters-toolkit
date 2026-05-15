@@ -1,0 +1,17 @@
+add_library(ft_lib STATIC
+    src/blast.cpp
+    src/pal.cpp
+    src/ealib.cpp
+    src/pic.cpp
+)
+
+target_include_directories(ft_lib
+    PUBLIC  include
+    PRIVATE vendor
+)
+
+if(MSVC)
+    target_compile_options(ft_lib PRIVATE /W3 /WX-)
+else()
+    target_compile_options(ft_lib PRIVATE -Wall -Wextra)
+endif()

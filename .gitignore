@@ -1,0 +1,24 @@
+# Build output
+build/
+
+# Game asset files — never commit copyrighted game content
+*.LIB
+*.PIC
+*.PAL
+*.eac
+*.png
+*.jpg
+*.jpeg
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
