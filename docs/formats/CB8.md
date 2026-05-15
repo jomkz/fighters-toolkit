@@ -1,7 +1,8 @@
-# CB8 -- FMV Video Format (.CB8)
+# CB8 -- FMV Container Format (.CB8)
 
-Full-motion video used for intros, cutscenes, and per-aircraft presentation
-clips. Each `.CB8` is paired with a `.11K` audio file of the same stem.
+Multiplexed audio/video container for full-motion video. Used for intros,
+cutscenes, and per-aircraft presentation clips. Each `.CB8` is paired with a
+`.11K` audio file of the same stem (for playback outside the container).
 
 Found in: `FA_4C.LIB`, `FA_4D.LIB`, `FA_10.LIB`, `FA_10B.LIB`, `FA_11.LIB`, `FA_11B.LIB`
 
@@ -9,81 +10,137 @@ Found in: `FA_4C.LIB`, `FA_4D.LIB`, `FA_10.LIB`, `FA_10B.LIB`, `FA_11.LIB`, `FA_
 
 ## File Layout
 
+The file begins with a 64-byte DRBC header, followed by a sequence of
+variable-length typed chunks packed back-to-back. Each chunk starts with a
+4-byte ASCII type tag and a 4-byte total size (including the tag and size field).
+
 ```
 Offset  Size   Description
 ------  ----   -----------
-0        64    DRBC outer header
-64+      var   Inner video chunk (MRFA or VooM — see below)
+0        64    DRBC file header
+64+      var   Typed chunks: MRFA, MRFI, VooM (see below)
+```
+
+Chunk structure:
+```
+Offset  Size  Description
+------  ----  -----------
+0        4    ASCII type tag ("MRFA", "MRFI", or "VooM")
+4        4    uint32 LE: total size of this chunk in bytes (including these 8 bytes)
+8+       var  Chunk payload
 ```
 
 ---
 
-## DRBC Outer Header (64 bytes)
+## DRBC File Header (64 bytes)
 
 ```
 Offset  Size  Description
 ------  ----  -----------
 0        4    Magic: "DRBC" (ASCII)
 4        4    uint32 LE: flags (observed: 0x00000000 or 0x00000001)
-8        8    Unknown constant (observed: 96 00 22 56 65 00 00 00 across all files)
+8        8    Unknown constant (observed identical across all files)
 16       2    Unknown (observed: 0x0000 or 0x0080)
 18      46    0xFF padding
 ```
 
-The inner chunk type is determined by the magic at offset 64, not by any field
-in the DRBC header.
-
 ---
 
-## Inner Chunk: VooM (intro / cutscene FMV, 320×240)
+## Chunk Type: MRFA — Audio Block
 
-Used for full-screen intro and cutscene videos (e.g. `ATF.CB8`, `C_INTRO.CB8`).
+Raw PCM audio data. The chunk payload contains uncompressed 8-bit unsigned
+PCM samples at 11025 Hz (matching the `.11K` convention). Silence is 0x80.
 
 ```
 Offset  Size  Description
 ------  ----  -----------
-0        4    Magic: "VooM" (ASCII)
-4        4    uint32 LE: unknown
-8        4    uint32 LE: width in pixels (observed: 320)
-12       4    uint32 LE: height in pixels (observed: 240)
-16+      var  Frame index and frame data (format not yet reversed)
-```
-
----
-
-## Inner Chunk: MRFA (per-aircraft clips, 128-wide)
-
-Used for per-aircraft presentation videos in `FA_10.LIB`–`FA_11B.LIB` and
-debriefing clips in `FA_4C.LIB`.
-
-```
-Offset  Size  Description
-------  ----  -----------
-0        4    Magic: "MRFA" (ASCII)
-4        4    uint32 LE: unknown constant (observed: 0x00001CCE = 7374)
-8        4    uint32 LE: width in pixels (observed: 128)
-12       4    uint32 LE: height (observed: 0 — encoding unknown)
+0        4    Magic: "MRFA"
+4        4    uint32 LE: chunk size (observed: 7374)
+8        4    uint32 LE: unknown (observed: 128 — not a pixel dimension)
+12       4    uint32 LE: unknown (observed: 0)
 16       4    uint32 LE: unknown (observed: 8)
 20       4    uint32 LE: unknown (observed: 1)
-24+      var  Codebook + frame data (format not yet reversed)
+24    7350    Raw 8-bit unsigned PCM samples at 11025 Hz
 ```
 
-Height is stored as 0 in all observed MRFA files; actual display height is
-unknown without further decoding.
+7350 samples ÷ 11025 Hz = 666.7 ms = exactly 10 video frames at 15 fps.
 
 ---
 
-## Audio
+## Chunk Type: MRFI — Inter Video Frame
 
-Audio is stored separately in the paired `.11K` file (raw PCM). It is not
-embedded in the `.CB8`.
+A single delta-coded (P-frame) video frame. Sizes vary (~8,240–12,716 bytes
+observed). The internal encoding has not been reversed.
+
+```
+Offset  Size  Description
+------  ----  -----------
+0        4    Magic: "MRFI"
+4        4    uint32 LE: chunk size (variable)
+8+       var  Compressed delta frame data
+```
+
+---
+
+## Chunk Type: VooM — Video Index / Key Frame
+
+Serves as both a video key frame and an A/V index table. The payload begins
+with a fixed header describing the video stream, followed by a flat array of
+8-byte index entries that alternate between audio and video chunks.
+
+```
+VooM header:
+Offset  Size  Description
+------  ----  -----------
+0        4    Magic: "VooM"
+4        4    uint32 LE: chunk size
+8        4    uint32 LE: total index entry count (audio + video combined)
+12       4    uint32 LE: width in pixels
+16       4    uint32 LE: height in pixels
+20       4    uint32 LE: unknown (observed: 6000)
+24+      var  Index entries (see below), then key frame pixel data
+```
+
+Index entries (8 bytes each, starting at offset 24):
+```
+Offset  Size  Description
+------  ----  -----------
+0        4    uint32 LE: byte offset of chunk data (absolute in file)
+4        4    uint32 LE: byte size of chunk data
+```
+
+Entries alternate audio/video: even entries point to MRFA audio blocks (constant
+400-byte size, sequential offsets), odd entries point to MRFI video frames
+(variable size, cumulative offsets).
+
+---
+
+## Typical Chunk Sequence
+
+```
+DRBC header
+MRFA  — silent/blank audio lead-in
+MRFA  — first audio block
+VooM  — A/V index + video key frame (I-frame)
+MRFI  — delta frame
+MRFI  — delta frame
+MRFI  — delta frame
+MRFI  — delta frame
+MRFI  — delta frame
+MRFA  — next audio block (covers the preceding 5 MRFI frames + upcoming 5)
+MRFI × 5
+MRFA
+MRFI × 5
+...
+```
+
+---
 
 ## Observed Files
 
-| File | Inner format | Width | Height | Source LIB |
-|------|-------------|-------|--------|------------|
-| ATF.CB8 | VooM | 320 | 240 | FA_4C.LIB |
-| C_INTRO.CB8 | VooM | 320 | 240 | FA_4C.LIB |
-| JANELOGO.CB8 | MRFA | 128 | ? | FA_4C.LIB |
-| B2_D.CB8 | MRFA | 128 | ? | FA_10.LIB |
-| 117_D.CB8 | MRFA | 128 | ? | FA_10.LIB |
+| File | Video | Audio | Source LIB |
+|------|-------|-------|------------|
+| ATF.CB8 | VooM 320×240 | .11K (external) | FA_4C.LIB |
+| C_INTRO.CB8 | VooM 320×240 | .11K (external) | FA_4C.LIB |
+| JANELOGO.CB8 | MRFI delta frames | MRFA blocks (11025 Hz) | FA_4C.LIB |
+| B2_D.CB8 | MRFI delta frames | MRFA blocks (11025 Hz) | FA_10.LIB |

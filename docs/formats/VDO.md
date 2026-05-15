@@ -34,19 +34,24 @@ Offset  Size  Description
 26       2    uint16 LE: audio sample rate in Hz (observed: 8000)
 28       4    uint32 LE: unknown
 32      16    zeroed
-48     768    quantization / VQ codebook tables
+48     768    VGA palette: 256 × 3 bytes (R, G, B each 6-bit, range 0–63)
 ```
 
-The 768 bytes at offset 48 contain non-zero table data used by the video codec.
-Their exact structure has not been fully reversed.
+The 768-byte palette at offset 48 is a standard VGA DAC palette — 256 entries of
+3 bytes each (red, green, blue), all values in 0–63 (6-bit per channel, matching
+VGA register format). Entry 0 is always black (00 00 00). The palette is
+per-video; each `.VDO` file carries its own.
+
+Field at offset 22 (0x0100 = 256) likely reflects the palette size; field at
+offset 24 (1) is likely audio channel count (mono).
 
 ## Frame Data
 
 Frame data begins at offset 816. Frames are packed back-to-back with no
 delimiters. Frame N starts at offset `816 + sum(FBC[0..N-1])`.
 
-Each frame encodes one video frame; the internal encoding uses the codebook
-from the header. The exact per-frame bitstream format has not been reversed.
+Frame data is palettized (8-bit palette indices into the header palette). The
+per-frame encoding has not been fully reversed.
 
 ## Audio
 
