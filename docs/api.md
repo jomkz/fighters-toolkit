@@ -220,3 +220,39 @@ ShMesh      sh_parse_mesh(const uint8_t* data, size_t size);
 std::string sh_to_obj(const ShMesh& mesh);   // returns Wavefront OBJ text
 } // namespace ft
 ```
+
+---
+
+## cb8.h — FMV video decoder
+
+```cpp
+namespace ft {
+
+struct Cb8Info {
+    uint32_t width;
+    uint32_t height;
+    uint32_t frame_count;
+    uint32_t samples_per_frame;  // sync counter ticks per frame (400)
+    uint32_t audio_sync_rate;    // sync counter ticks per second (6000 = 400 × 15 fps)
+};
+
+// Parse VooM header from a CB8 file in memory.
+bool cb8_info(const uint8_t* data, size_t size, Cb8Info* out);
+
+struct Cb8Decoder;  // opaque
+
+// Open a decoder for sequential frame access.  Returns nullptr on bad input.
+// `data` must remain valid for the lifetime of the decoder.
+Cb8Decoder* cb8_open(const uint8_t* data, size_t size);
+void        cb8_close(Cb8Decoder* dec);
+
+// Decode frame `frame_idx` and return palette index bytes (width × height),
+// row-major, top-to-bottom.  Seeking backward resets the canvas to frame 0.
+// Returns empty on error or out-of-range frame_idx.
+std::vector<uint8_t> cb8_decode_frame(Cb8Decoder* dec, uint32_t frame_idx);
+
+} // namespace ft
+```
+
+For best performance iterate frames in forward order; backward seeks replay
+from frame 0.

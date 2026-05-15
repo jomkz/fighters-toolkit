@@ -176,3 +176,32 @@ Open in Blender, MeshLab, or any 3D viewer.
 
 65 of 1275 FA shape files use x86 machine code for rendering (particle effects,
 AC130, etc.) and produce no OBJ output. All others extract cleanly.
+
+---
+
+## cb8 — FMV video
+
+```
+ft cb8 info   <file.CB8>
+ft cb8 frames <file.CB8> [-o output_dir]
+```
+
+#### `ft cb8 info <file.CB8>`
+
+Print video dimensions, frame count, frame rate, and total duration.
+
+```
+> ft cb8 info JANELOGO.CB8
+video: 320 x 240, 466 frames, 15.0 fps, 31.07 s
+audio: 11025 Hz PCM, 400 sync ticks/frame
+```
+
+#### `ft cb8 frames <file.CB8> [-o output_dir]`
+
+Decode every frame to a PGM image (8-bit palette indices as greyscale) in
+`output_dir` (default: current directory). Files are named `frame0000.pgm`,
+`frame0001.pgm`, etc.
+
+The decoder maintains a persistent canvas across frames; each MRFI chunk
+applies a delta to the previous state. Output values are raw palette indices —
+apply the appropriate PAL file separately to get RGB colours.
