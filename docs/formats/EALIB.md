@@ -121,5 +121,11 @@ static const int lenextra[] = {0,0,0,0,0,0,0,0, 1, 2, 3, 4,  5,  6,  7,  8};
 |------|----------|--------------|
 | FA_1.LIB | Install dir | Fonts (.FNT), UI graphics |
 | FA_2.LIB | Install dir | Shapes, missions, audio, type defs, cutscenes, text, palette -- 5405 files total |
-| FA_3.LIB | CD (F:\\) | 822 JPEG-format textures, 269 aircraft data files |
+| FA_3.LIB | Disk 2 (Red) | 822 JPEG-format textures, 269 aircraft data files |
 | FA_4B.LIB | Install dir | Additional assets |
+| FA_4C.LIB | Disk 1 (Blue) | — |
+| FA_7.LIB | Disk 1 (Blue) | — |
+| FA_10.LIB | Disk 2 (Red) | — |
+| FA_10B.LIB | Disk 2 (Red) | — |
+| FA_11.LIB | Disk 2 (Red) | — |
+| FA_11B.LIB | Disk 2 (Red) | — |
