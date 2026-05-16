@@ -1,0 +1,118 @@
+# Development
+
+## Prerequisites
+
+- **Visual Studio 2022 or 2026** (MSVC) with the following workloads:
+  - Desktop development with C++
+  - C++ CMake tools for Windows (installs cmake.exe into the VS directory)
+- **Git**
+- **Windows 10 or 11** recommended for development (target runtime is Windows 7+)
+
+CMake ships with Visual Studio but is not added to `PATH` by default. The easiest fix is to add it manually — find `cmake.exe` under your VS install (typically `Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\`) and add that directory to your user `PATH`, or use the `$cmake` variable pattern shown below.
+
+## Building
+
+### Configure (first time only)
+
+```powershell
+cmake -B build -G "Visual Studio 17 2022"   # VS 2022
+cmake -B build -G "Visual Studio 18 2026"   # VS 2026
+```
+
+If cmake is not in `PATH`:
+
+```powershell
+$cmake = "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
+& $cmake -B build -G "Visual Studio 17 2022"
+```
+
+### Build targets
+
+```powershell
+cmake --build build --config Debug              # all targets
+cmake --build build --target ft-gui --config Debug    # GUI only
+cmake --build build --target ft     --config Debug    # CLI only
+cmake --build build --config Release            # release build
+```
+
+Output locations:
+
+| Target | Debug | Release |
+|---|---|---|
+| `ft-gui.exe` | `build\gui\Debug\ft-gui.exe` | `build\gui\Release\ft-gui.exe` |
+| `ft.exe` | `build\cli\Debug\ft.exe` | `build\cli\Release\ft.exe` |
+| `ft_lib.lib` | `build\lib\Debug\ft_lib.lib` | `build\lib\Release\ft_lib.lib` |
+
+## IDE Setup
+
+### VS Code
+
+VS Code works well for editing and building. CMake configuration is done once from a terminal; after that the provided tasks handle the build/run cycle.
+
+**Recommended extensions:**
+- C/C++ (Microsoft)
+- CMake Tools (Microsoft)
+- Hex Editor (Microsoft) — useful for inspecting binary game assets
+
+**Build and run tasks** are pre-configured in `.vscode/tasks.json`:
+
+| Task | Shortcut | Action |
+|---|---|---|
+| Build ft-gui | `Ctrl+Shift+B` | `cmake --build build --target ft-gui --config Debug` |
+| Run ft-gui | — | Builds then launches `build\gui\Debug\ft-gui.exe` |
+
+If cmake is not in `PATH`, add it via VS Code's `terminal.integrated.env.windows` setting in your user `settings.json`:
+
+```json
+"terminal.integrated.env.windows": {
+    "PATH": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin;${env:PATH}"
+}
+```
+
+### Visual Studio
+
+Open the generated solution directly:
+
+```
+build\fighters-toolkit.sln
+```
+
+Or use **File → Open → CMake…** to open the root `CMakeLists.txt` — VS will configure the project automatically. Set the startup project to `ft-gui` for F5 debugging.
+
+## Project Structure
+
+```
+fighters-toolkit/
+├── lib/                    # ft_lib static library (all codecs, no platform deps)
+│   ├── include/ft/         # public headers
+│   └── src/                # codec implementations
+├── cli/                    # ft.exe CLI frontend
+│   └── src/
+├── gui/                    # ft-gui.exe ImGui/DX11 frontend
+│   ├── src/
+│   │   ├── main.cpp        # Win32 + DX11 host, window placement, ImGui init
+│   │   ├── app.h / app.cpp # App class, session management, menu bar
+│   │   ├── panels/         # lib_browser, editor_host, preview
+│   │   └── editors/        # per-format editors (audio, mission, brf, pic, …)
+│   └── vendor/             # Dear ImGui (vendored)
+└── docs/                   # documentation
+```
+
+### Adding a new editor
+
+1. Add a new `EditorKind` enum value in `gui/src/app.h`
+2. Wire the file extension to the new kind in `App::OpenEntry()` (`app.cpp`)
+3. Create `gui/src/editors/<format>_editor.h` and `<format>_editor.cpp`
+4. Call `Draw<Format>Editor(app)` from `DrawEditorHost()` in `gui/src/panels/editor_host.cpp`
+5. Add the `.cpp` to `gui/CMakeLists.txt`
+
+## Vendored Dependencies
+
+All dependencies are checked in — no package manager or internet access required to build.
+
+| Library | Location | License |
+|---|---|---|
+| Dear ImGui | `gui/vendor/imgui/` | MIT |
+| stb_image | `lib/vendor/` | MIT / Public Domain |
+| stb_image_write | `lib/vendor/` | MIT / Public Domain |
+| blast (PKWare DCL) | `lib/src/blast.cpp` | zlib/libpng (Mark Adler) |

@@ -7,8 +7,10 @@ This documentation is an attempt to preserve the knowledge built up from the gre
 | Document | Description |
 |----------|-------------|
 | [cli.md](cli.md) | Full CLI command reference |
+| [gui.md](gui.md) | ft-gui graphical editor feature reference |
 | [modding.md](modding.md) | Step-by-step modding recipes |
 | [api.md](api.md) | C++ library API reference |
+| [development.md](development.md) | Building, IDE setup, and project structure |
 
 ## File Format Reference
 

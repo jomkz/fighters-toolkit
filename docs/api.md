@@ -15,8 +15,6 @@ All public headers are under `lib/include/ft/`. Include them with the `ft/` pref
 // etc.
 ```
 
----
-
 ## ealib.h — Archive container
 
 ```cpp
@@ -47,8 +45,6 @@ std::vector<uint8_t> ealib_patch(const uint8_t* data, size_t size,
 } // namespace ft
 ```
 
----
-
 ## pal.h — VGA palette
 
 ```cpp
@@ -62,8 +58,6 @@ Palette pal_load(const uint8_t* data, size_t size); // load a .PAL file
 void    pal_save(const Palette& pal, uint8_t out[768]);
 } // namespace ft
 ```
-
----
 
 ## pic.h — PIC image codec
 
@@ -93,8 +87,6 @@ std::vector<uint8_t> pic_encode(const uint8_t* rgba, int w, int h,
 } // namespace ft
 ```
 
----
-
 ## blast.h — PKWare DCL decompressor
 
 ```cpp
@@ -107,8 +99,6 @@ int blast_decompress(const uint8_t* in, size_t in_size,
 int blast_decompress_ea(const uint8_t* in, size_t in_size,
                         uint8_t* out, size_t out_capacity);
 ```
-
----
 
 ## seq.h — Cutscene timeline
 
@@ -132,8 +122,6 @@ std::vector<uint8_t> seq_serialize(const SeqFile&);
 } // namespace ft
 ```
 
----
-
 ## audio.h — Raw PCM audio
 
 ```cpp
@@ -152,8 +140,6 @@ std::vector<uint8_t> audio_from_wav(const uint8_t* wav, size_t size,
 } // namespace ft
 ```
 
----
-
 ## brf.h / ot.h — Type definitions
 
 ```cpp
@@ -171,8 +157,6 @@ std::vector<uint8_t> pt_serialize(const PlaneType&);
 } // namespace ft
 ```
 
----
-
 ## mission.h — Mission and map files
 
 ```cpp
@@ -184,8 +168,6 @@ MissionFile          mission_parse(const uint8_t* data, size_t size);
 std::vector<uint8_t> mission_serialize(const MissionFile&);
 } // namespace ft
 ```
-
----
 
 ## sh.h — 3D shape / model
 
@@ -220,8 +202,6 @@ ShMesh      sh_parse_mesh(const uint8_t* data, size_t size);
 std::string sh_to_obj(const ShMesh& mesh);   // returns Wavefront OBJ text
 } // namespace ft
 ```
-
----
 
 ## cb8.h — FMV video decoder
 

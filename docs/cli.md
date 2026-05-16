@@ -2,7 +2,19 @@
 
 All commands follow the pattern `ft <subsystem> <subcommand> [args]`.
 
----
+## Quick Reference
+
+```
+ft lib     ls / unpack / pack / patch   # .LIB archive management
+ft pic     info / unpack / pack         # .PIC images (dense, sparse, JPEG)
+ft seq     dump / unpack / pack         # .SEQ cutscene timelines
+ft audio   info / unpack / pack         # .11K / .5K / .8K raw PCM audio
+ft ot      info / unpack / pack         # object type definitions
+ft pt      info / unpack / pack         # aircraft type definitions
+ft nt / jt / see / ecm / gas …          # other type definitions
+ft mission info / unpack / pack         # .M / .MM mission and map files
+ft sh      info / unpack                # .SH 3D shapes → Wavefront OBJ
+```
 
 ## lib — Archive
 
@@ -56,8 +68,6 @@ ft lib patch FA_2.LIB BALTIC.TXT edits\BALTIC.TXT FA_2_mod.LIB
 ft lib patch FA_3.LIB F16C_0.PIC F16C_mod.PIC FA_3_mod.LIB
 ```
 
----
-
 ## pic — Images
 
 ```
@@ -81,8 +91,6 @@ Encode to a dense PIC (format 0) with a full 256-color inline palette. Pixels wi
 alpha < 128 map to transparent (index 0xFF). Always provide the same `PALETTE.PAL`
 used during unpack.
 
----
-
 ## seq — Cutscene timelines
 
 ```
@@ -99,8 +107,6 @@ Pretty-print all events to stdout.
 
 Round-trip editable text. Output is byte-identical to originals.
 
----
-
 ## audio — PCM audio
 
 ```
@@ -111,8 +117,6 @@ ft audio pack   <in.wav>       -o <out.11K|.5K> [-r hz]
 
 Sample rate is inferred from the file extension (`.11K` = 11025 Hz, `.5K` = 5512 Hz).
 Override with `-r`. Input WAV for packing must be mono and 8-bit.
-
----
 
 ## ot / nt / pt / jt / see / ecm / gas — Type definitions
 
@@ -143,8 +147,6 @@ Ceiling:     50000 ft
 Fuel:        6972 lb
 ```
 
----
-
 ## mission / mm — Mission and map files
 
 ```
@@ -155,8 +157,6 @@ ft mission pack   <in.txt>     -o <out.M|.MM>
 
 `ft mm` is an alias for `.MM` map files. Round-trips byte-identically for all 592
 mission files in FA_2.LIB.
-
----
 
 ## sh — 3D shapes
 
@@ -176,8 +176,6 @@ Open in Blender, MeshLab, or any 3D viewer.
 
 65 of 1275 FA shape files use x86 machine code for rendering (particle effects,
 AC130, etc.) and produce no OBJ output. All others extract cleanly.
-
----
 
 ## cb8 — FMV video
 

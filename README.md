@@ -31,39 +31,14 @@ Both `ft.exe` and `ft-gui.exe` are **64-bit Windows binaries** and require Windo
 
 Windows XP is not supported for three reasons: the build produces x64 PE only (standard XP is 32-bit); MSVC 2022+ dropped the XP-compatible toolset (`v141_xp`); and `std::filesystem` internally calls Vista-only APIs such as `GetFinalPathNameByHandleW`. Supporting XP would require downgrading to C++14, replacing `std::filesystem` with raw Win32 I/O, and using MSVC 2015 with the XP toolset — a significant regression for a negligible user base.
 
-## Quick reference
-
-```
-ft lib   ls / unpack / pack / patch    # .LIB archive management
-ft pic   info / unpack / pack          # .PIC images (dense, sparse, JPEG)
-ft seq   dump / unpack / pack          # .SEQ cutscene timelines
-ft audio info / unpack / pack          # .11K / .5K raw PCM audio
-ft ot    info / unpack / pack          # object type definitions
-ft pt    info / unpack / pack          # plane (aircraft) type definitions
-ft nt / jt / see / ecm / gas  ...      # other type definitions
-ft mission info / unpack / pack        # .M / .MM mission and map files
-ft sh    info / unpack                 # .SH 3D shapes → Wavefront OBJ
-```
-
 ## Documentation
 
 - [docs/](docs/README.md) — file format specs and verification results
-- [docs/cli.md](docs/cli.md) — full command reference with examples
+- [docs/cli.md](docs/cli.md) — full CLI command reference with examples
 - [docs/gui.md](docs/gui.md) — ft-gui graphical editor feature reference
 - [docs/modding.md](docs/modding.md) — modding recipes (textures, stats, missions, models)
 - [docs/api.md](docs/api.md) — C++ library API
-
-## Building
-
-Requires Visual Studio 2022 or 2026 (MSVC). CMake ships with VS but isn't in PATH:
-
-```powershell
-$cmake = "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
-& $cmake -B build -G "Visual Studio 18 2026"
-& $cmake --build build --config Release
-# Output: build\cli\Release\ft.exe  (CLI)
-#         build\gui\Release\ft-gui.exe  (GUI)
-```
+- [docs/development.md](docs/development.md) — building, IDE setup, project structure
 
 ## Acknowledgements
 

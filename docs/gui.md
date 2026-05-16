@@ -131,12 +131,4 @@ All settings persist automatically in `ft-gui.ini` (same directory as the execut
 
 ## Building
 
-```powershell
-$cmake = "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
-& $cmake -B build -G "Visual Studio 18 2026"
-& $cmake --build build --target ft-gui --config Release
-# Output: build\gui\Release\ft-gui.exe
-```
-
-Requires Visual Studio 2022 or 2026 (MSVC), Windows 7+, DirectX 11 runtime (built into Windows 7+).
-No additional dependencies — Dear ImGui and stb_image are vendored.
+See [development.md](development.md).

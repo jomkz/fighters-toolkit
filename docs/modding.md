@@ -9,8 +9,6 @@ ft lib unpack FA_2.LIB out\FA_2
 # PALETTE.PAL is now at out\FA_2\PALETTE.PAL
 ```
 
----
-
 ## Texture mod (FA_3.LIB aircraft skins)
 
 FA_3.LIB lives on the CD (typically `F:\`). All 822 textures are JPEG-format PICs —
@@ -37,8 +35,6 @@ ft lib patch F:\FA_3.LIB F16C_0.PIC F16C_mod.PIC FA_3_mod.LIB
 The re-encoded PIC is format 0 (dense) with an inline 256-color palette. The engine
 accepts this in place of the original JPEG format.
 
----
-
 ## Text / data mod (mission text, pilot bios)
 
 ```powershell
@@ -46,8 +42,6 @@ ft lib unpack FA_2.LIB out\FA_2
 notepad out\FA_2\BALTIC.TXT
 ft lib patch FA_2.LIB BALTIC.TXT out\FA_2\BALTIC.TXT FA_2_mod.LIB
 ```
-
----
 
 ## Aircraft stats mod (.PT)
 
@@ -64,8 +58,6 @@ ft pt pack F16C.pt.txt -o F16C_mod.PT
 ft lib patch FA_2.LIB F16C.PT F16C_mod.PT FA_2_mod.LIB
 ```
 
----
-
 ## 3D model inspection (.SH)
 
 ```powershell
@@ -77,8 +69,6 @@ ft sh info out\FA_2\F16C.SH
 # Export to Wavefront OBJ and open in Blender / MeshLab
 ft sh unpack out\FA_2\F16C.SH -o F16C.obj
 ```
-
----
 
 ## Mission edit (.M)
 
@@ -92,8 +82,6 @@ ft mission pack BALTIC.m.txt -o BALTIC_mod.M
 ft lib patch FA_2.LIB BALTIC.M BALTIC_mod.M FA_2_mod.LIB
 ```
 
----
-
 ## Cutscene edit (.SEQ)
 
 ```powershell
@@ -105,8 +93,6 @@ ft seq unpack out\FA_2\KDEAD.SEQ -o KDEAD.seq.txt
 ft seq pack KDEAD.seq.txt -o KDEAD_mod.SEQ
 ft lib patch FA_2.LIB KDEAD.SEQ KDEAD_mod.SEQ FA_2_mod.LIB
 ```
-
----
 
 ## Mission briefing text (.MT)
 
@@ -125,8 +111,6 @@ ft lib patch FA_2.LIB BALTIC.MT out\FA_2\BALTIC.MT FA_2_mod.LIB
 
 See [formats/MISSION.md](formats/MISSION.md) for the section and directive syntax.
 
----
-
 ## Aircraft flight model reference data
 
 The community has produced G-envelope spreadsheets for 70+ real aircraft
@@ -143,8 +127,6 @@ speed_ft_per_sec = ktas * 1.6878         # 1 knot = 1.6878 ft/s
 altitude_ft      = altitude_as_read      # already in feet
 ```
 
----
-
 ## Tips
 
 - The game loads flags=0 (uncompressed) LIB entries just as well as flags=4 (compressed).
@@ -154,8 +136,6 @@ altitude_ft      = altitude_as_read      # already in feet
   at 256 colors or less for best fidelity.
 - Test mods by placing the modified `.LIB` in the install directory. The engine searches
   there before the CD, so you can override without burning a disc.
-
----
 
 ## Recommended Tools
 
