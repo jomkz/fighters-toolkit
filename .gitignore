@@ -1,3 +1,6 @@
+# Claude Code internal directory
+.claude/
+
 # Build output
 build/
 
