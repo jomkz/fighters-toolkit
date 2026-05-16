@@ -45,7 +45,7 @@ static std::string Win32OpenFile(const wchar_t* filter, const wchar_t* title) {
 
 // Infer sample rate from extension stored in editor.ext
 static int InferRate(const std::string& ext) {
-    if (ext == "5k")  return 5512;
+    if (ext == "5k")  return 5000;
     if (ext == "8k")  return 8000;
     if (ext == "22k") return 22050;
     return 11025;
@@ -70,7 +70,7 @@ void DrawAudioEditor(App& app) {
         for (int i = 0; i < DISP; i++) {
             int idx = (int)((float)i / DISP * samples);
             if (idx < samples)
-                waveform[i] = (float)(int8_t)ed.data[idx] / 128.0f;
+                waveform[i] = ((float)ed.data[idx] - 128.0f) / 128.0f;
             else
                 waveform[i] = 0.0f;
         }
@@ -91,9 +91,7 @@ void DrawAudioEditor(App& app) {
         w16(20, 1); w16(22, 1); w32(24, (uint32_t)rate); w32(28, (uint32_t)rate);
         w16(32, 1); w16(34, 8);
         memcpy(&wav[36], "data", 4); w32(40, (uint32_t)samples);
-        // FA is signed 8-bit; WAV 8-bit is unsigned — XOR 0x80
-        for (int i = 0; i < samples; i++)
-            wav[44 + i] = ed.data[i] ^ 0x80;
+        memcpy(&wav[44], ed.data.data(), (size_t)samples);
         PlaySoundA((LPCSTR)wav.data(), nullptr,
                    SND_MEMORY | SND_ASYNC | SND_NODEFAULT);
     }

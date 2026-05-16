@@ -18,30 +18,97 @@ App::App(ID3D11Device* device, ID3D11DeviceContext* ctx)
 App::~App() {}
 
 void App::Draw() {
+    // Host window — fills the OS window's client area exactly.
     const ImGuiViewport* vp = ImGui::GetMainViewport();
-    float menuH = ImGui::GetFrameHeight() + ImGui::GetStyle().FramePadding.y * 2.0f;
-    float y0    = vp->WorkPos.y + menuH;
-    float h     = vp->WorkSize.y - menuH;
-
-    ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x, y0), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(290, h), ImGuiCond_FirstUseEver);
-    DrawLibBrowser(*this);
-
-    ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x + 295, y0), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(820, h), ImGuiCond_FirstUseEver);
-    DrawEditorHost(*this);
-
-    ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x + 1120, y0), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(275, h), ImGuiCond_FirstUseEver);
-    DrawPreview(*this);
+    ImGui::SetNextWindowPos(vp->WorkPos);
+    ImGui::SetNextWindowSize(vp->WorkSize);
+    ImGuiWindowFlags hostFlags =
+        ImGuiWindowFlags_NoTitleBar   | ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoResize     | ImGuiWindowFlags_NoMove     |
+        ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+        ImGuiWindowFlags_MenuBar;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("##Host", nullptr, hostFlags);
+    ImGui::PopStyleVar(3);
 
     DrawMenuBar();
+
+    // Three-panel layout with draggable splitters.
+    // leftW / rightW persist for the session; center takes whatever remains.
+    static float leftW  = 280.0f;
+    static float rightW = 280.0f;
+    const  float splitterW = 4.0f;
+    const  float minPane   = 120.0f;
+
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    float  h     = avail.y;
+    float  midW  = avail.x - leftW - rightW - splitterW * 2.0f;
+    if (midW < minPane) midW = minPane;
+
+    // Left panel
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4.0f, 4.0f));
+    ImGui::BeginChild("##Browser", ImVec2(leftW, h), false);
+    DrawLibBrowser(*this);
+    ImGui::EndChild();
+    ImGui::PopStyleVar();
+
+    // Left splitter
+    ImGui::SameLine(0.0f, 0.0f);
+    ImGui::PushStyleColor(ImGuiCol_Button,        ImGui::GetStyleColorVec4(ImGuiCol_Separator));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_SeparatorHovered));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImGui::GetStyleColorVec4(ImGuiCol_SeparatorActive));
+    ImGui::Button("##split0", ImVec2(splitterW, h));
+    ImGui::PopStyleColor(3);
+    if (ImGui::IsItemActive()) {
+        leftW += ImGui::GetIO().MouseDelta.x;
+        if (leftW < minPane) leftW = minPane;
+        if (leftW > avail.x - rightW - splitterW * 2.0f - minPane)
+            leftW = avail.x - rightW - splitterW * 2.0f - minPane;
+    }
+    if (ImGui::IsItemHovered() || ImGui::IsItemActive())
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+
+    // Center panel
+    ImGui::SameLine(0.0f, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4.0f, 4.0f));
+    ImGui::BeginChild("##Editor", ImVec2(midW, h), false);
+    DrawEditorHost(*this);
+    ImGui::EndChild();
+    ImGui::PopStyleVar();
+
+    // Right splitter
+    ImGui::SameLine(0.0f, 0.0f);
+    ImGui::PushStyleColor(ImGuiCol_Button,        ImGui::GetStyleColorVec4(ImGuiCol_Separator));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_SeparatorHovered));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImGui::GetStyleColorVec4(ImGuiCol_SeparatorActive));
+    ImGui::Button("##split1", ImVec2(splitterW, h));
+    ImGui::PopStyleColor(3);
+    if (ImGui::IsItemActive()) {
+        rightW -= ImGui::GetIO().MouseDelta.x;
+        if (rightW < minPane) rightW = minPane;
+        if (rightW > avail.x - leftW - splitterW * 2.0f - minPane)
+            rightW = avail.x - leftW - splitterW * 2.0f - minPane;
+    }
+    if (ImGui::IsItemHovered() || ImGui::IsItemActive())
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+
+    // Right panel
+    ImGui::SameLine(0.0f, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4.0f, 4.0f));
+    ImGui::BeginChild("##Preview", ImVec2(rightW, h), false);
+    DrawPreview(*this);
+    ImGui::EndChild();
+    ImGui::PopStyleVar();
+
+    ImGui::End();
 }
 
 // ---------- Menu bar ----------
 
 void App::DrawMenuBar() {
-    if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Open LIB...", "Ctrl+O"))  OpenLibDialog();
             ImGui::Separator();
@@ -76,7 +143,7 @@ void App::DrawMenuBar() {
             ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - w);
             ImGui::TextDisabled("%s", statusMsg.c_str());
         }
-        ImGui::EndMainMenuBar();
+        ImGui::EndMenuBar();
     }
 
     // Duplicate LIB popup

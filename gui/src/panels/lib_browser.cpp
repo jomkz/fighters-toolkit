@@ -58,12 +58,9 @@ static ImVec4 TypeColor(const char* label) {
 }
 
 void DrawLibBrowser(App& app) {
-    ImGui::Begin("LIB Browser");
-
     if (app.sessions.empty()) {
         ImGui::TextDisabled("No LIB open.");
         ImGui::TextDisabled("File -> Open LIB...");
-        ImGui::End();
         return;
     }
 
@@ -92,7 +89,6 @@ void DrawLibBrowser(App& app) {
                 open = false;
                 app.sessions.erase(app.sessions.begin() + si);
                 ImGui::EndPopup();
-                ImGui::End();
                 return;
             }
             if (ImGui::MenuItem("Install as FA_0.LIB",
@@ -155,5 +151,4 @@ void DrawLibBrowser(App& app) {
         ImGui::TreePop();
     }
 
-    ImGui::End();
 }

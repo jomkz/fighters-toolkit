@@ -11,7 +11,6 @@ static int        s_previewLib   = -2;
 static int        s_previewEntry = -2;
 
 void DrawPreview(App& app) {
-    ImGui::Begin("Preview");
 
     const auto& ed = app.editor;
 
@@ -54,5 +53,4 @@ void DrawPreview(App& app) {
         ImGui::TextDisabled("No record selected.");
     }
 
-    ImGui::End();
 }

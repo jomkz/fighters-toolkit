@@ -11,11 +11,8 @@
 #include "imgui.h"
 
 void DrawEditorHost(App& app) {
-    ImGui::Begin("Editor");
-
     if (app.editor.kind == EditorKind::None) {
         ImGui::TextDisabled("Select a record in the LIB Browser to edit.");
-        ImGui::End();
         return;
     }
 
@@ -51,5 +48,4 @@ void DrawEditorHost(App& app) {
         break;
     }
 
-    ImGui::End();
 }
