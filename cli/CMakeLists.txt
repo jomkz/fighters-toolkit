@@ -8,6 +8,7 @@ add_executable(ft
     cmd_mission.cpp
     cmd_sh.cpp
     cmd_cb8.cpp
+    cmd_raw.cpp
 )
 
 target_link_libraries(ft PRIVATE ft_lib)

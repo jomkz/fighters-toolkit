@@ -10,6 +10,7 @@ add_library(ft_lib STATIC
     src/mission.cpp
     src/sh.cpp
     src/cb8.cpp
+    src/raw.cpp
 )
 
 target_include_directories(ft_lib
