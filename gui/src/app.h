@@ -77,4 +77,5 @@ private:
 
     ID3D11Device*        m_device;
     ID3D11DeviceContext* m_ctx;
+    std::string          m_dupLibPath; // set when a duplicate open is attempted
 };

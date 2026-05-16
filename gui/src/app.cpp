@@ -79,6 +79,15 @@ void App::DrawMenuBar() {
         ImGui::EndMainMenuBar();
     }
 
+    // Duplicate LIB popup
+    if (ImGui::BeginPopupModal("##DupLib", nullptr,
+                               ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Already open: %s", m_dupLibPath.c_str());
+        ImGui::Spacing();
+        if (ImGui::Button("OK")) { ImGui::CloseCurrentPopup(); m_dupLibPath.clear(); }
+        ImGui::EndPopup();
+    }
+
     // About popup
     if (ImGui::BeginPopupModal("##About", nullptr,
                                ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -115,6 +124,14 @@ void App::OpenLibDialog() {
     std::string path = Win32OpenFile(
         L"LIB Files\0*.LIB\0All Files\0*.*\0", L"Open LIB File");
     if (path.empty()) return;
+
+    for (const auto& s : sessions) {
+        if (fs::equivalent(fs::path(s.path), fs::path(path))) {
+            m_dupLibPath = fs::path(path).filename().string();
+            ImGui::OpenPopup("##DupLib");
+            return;
+        }
+    }
 
     std::ifstream f(path, std::ios::binary | std::ios::ate);
     if (!f) { statusMsg = "Cannot open: " + path; return; }
