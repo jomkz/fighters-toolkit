@@ -42,7 +42,7 @@ Windows XP is not supported for three reasons: the build produces x64 PE only (s
 
 ## Acknowledgements
 
-Playing the Jane's simulations in the 90s was a major factor in getting me into software
+Playing Jane's Fighters Anthology in the 90s was a major factor in getting me into software
 development. Learning how to build basic mods for Fighters Anthology — nothing ever
 released, just personal tinkering — was my first real experience of taking something
 apart to understand how it worked, and that curiosity never left me.
