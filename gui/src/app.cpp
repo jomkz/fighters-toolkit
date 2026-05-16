@@ -97,12 +97,13 @@ void App::DrawMenuBar() {
 static std::string Win32OpenFile(const wchar_t* filter, const wchar_t* title) {
     wchar_t buf[MAX_PATH] = {};
     OPENFILENAMEW ofn = {};
-    ofn.lStructSize = sizeof(ofn);
-    ofn.lpstrFilter = filter;
-    ofn.lpstrFile   = buf;
-    ofn.nMaxFile    = MAX_PATH;
-    ofn.lpstrTitle  = title;
-    ofn.Flags       = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+    ofn.lStructSize  = sizeof(ofn);
+    ofn.hwndOwner    = (HWND)ImGui::GetMainViewport()->PlatformHandleRaw;
+    ofn.lpstrFilter  = filter;
+    ofn.lpstrFile    = buf;
+    ofn.nMaxFile     = MAX_PATH;
+    ofn.lpstrTitle   = title;
+    ofn.Flags        = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
     if (!GetOpenFileNameW(&ofn)) return {};
     int len = WideCharToMultiByte(CP_UTF8, 0, buf, -1, nullptr, 0, nullptr, nullptr);
     std::string s(len - 1, 0);
@@ -132,6 +133,7 @@ void App::OpenLibDialog() {
 void App::ChooseInstallDir() {
     wchar_t buf[MAX_PATH] = {};
     BROWSEINFOW bi = {};
+    bi.hwndOwner = (HWND)ImGui::GetMainViewport()->PlatformHandleRaw;
     bi.lpszTitle = L"Select FA install directory";
     bi.ulFlags   = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
     LPITEMIDLIST pidl = SHBrowseForFolderW(&bi);

@@ -15,9 +15,13 @@ namespace fs = std::filesystem;
 static std::string Win32SaveFile(const wchar_t* filter, const wchar_t* defExt) {
     wchar_t buf[MAX_PATH] = {};
     OPENFILENAMEW ofn = {};
-    ofn.lStructSize = sizeof(ofn); ofn.lpstrFilter = filter;
-    ofn.lpstrFile = buf; ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrDefExt = defExt; ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
+    ofn.lStructSize  = sizeof(ofn);
+    ofn.hwndOwner    = (HWND)ImGui::GetMainViewport()->PlatformHandleRaw;
+    ofn.lpstrFilter  = filter;
+    ofn.lpstrFile    = buf;
+    ofn.nMaxFile     = MAX_PATH;
+    ofn.lpstrDefExt  = defExt;
+    ofn.Flags        = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
     if (!GetSaveFileNameW(&ofn)) return {};
     int len = WideCharToMultiByte(CP_UTF8,0,buf,-1,nullptr,0,nullptr,nullptr);
     std::string s(len-1,0); WideCharToMultiByte(CP_UTF8,0,buf,-1,s.data(),len,nullptr,nullptr);
@@ -26,9 +30,13 @@ static std::string Win32SaveFile(const wchar_t* filter, const wchar_t* defExt) {
 static std::string Win32OpenFile(const wchar_t* filter, const wchar_t* title) {
     wchar_t buf[MAX_PATH] = {};
     OPENFILENAMEW ofn = {};
-    ofn.lStructSize = sizeof(ofn); ofn.lpstrFilter = filter;
-    ofn.lpstrFile = buf; ofn.nMaxFile = MAX_PATH; ofn.lpstrTitle = title;
-    ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+    ofn.lStructSize  = sizeof(ofn);
+    ofn.hwndOwner    = (HWND)ImGui::GetMainViewport()->PlatformHandleRaw;
+    ofn.lpstrFilter  = filter;
+    ofn.lpstrFile    = buf;
+    ofn.nMaxFile     = MAX_PATH;
+    ofn.lpstrTitle   = title;
+    ofn.Flags        = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
     if (!GetOpenFileNameW(&ofn)) return {};
     int len = WideCharToMultiByte(CP_UTF8,0,buf,-1,nullptr,0,nullptr,nullptr);
     std::string s(len-1,0); WideCharToMultiByte(CP_UTF8,0,buf,-1,s.data(),len,nullptr,nullptr);
