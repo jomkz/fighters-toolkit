@@ -30,4 +30,5 @@ No standard image editor reads the raw 6-bit VGA palette format directly. Use a 
 editor to view or patch individual entries (9 bytes per color: R, G, B at 6-bit scale).
 
 - **HxD** — free, Windows; lightweight and fast for small binary files like `.PAL`
-- **010 Editor** `$` — paid; scripting and binary templates allow structured palette browsing
+- **VS Code** + [Hex Editor](https://marketplace.visualstudio.com/items?itemName=ms-vscode.hexeditor) — free, cross-platform; convenient if already using VS Code for text editing
+- **010 Editor** `$` — paid; binary templates allow a labelled struct view over the palette entries

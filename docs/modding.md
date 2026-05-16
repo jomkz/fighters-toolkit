@@ -205,7 +205,8 @@ For PAL files and binary formats without full ft support (PLT pilot saves, FBC).
 | Tool | Platform | Notes |
 |------|----------|-------|
 | [HxD](https://mh-nexus.de/en/hxd/) | Windows | Free; fast and straightforward |
-| [010 Editor](https://www.sweetscape.com/010editor/) `$` | Win / Mac / Linux | Paid; binary templates enable structured editing |
+| [VS Code + Hex Editor](https://marketplace.visualstudio.com/items?itemName=ms-vscode.hexeditor) | Win / Mac / Linux | Free; convenient if already using VS Code for text editing |
+| [010 Editor](https://www.sweetscape.com/010editor/) `$` | Win / Mac / Linux | Paid; binary templates enable structured editing once a format is fully mapped |
 
 ### FA-specific tools
 
