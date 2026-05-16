@@ -18,7 +18,7 @@ Fighters Toolkit provides:
 - A **zero-dependency, statically-linked** `ft.exe` — drop it anywhere and run it
 - A **static C++ library** (`ft_lib`) — embed in any GUI, script via ctypes, link from C#
 
-More than anything, this utility serves as an archaeology tool for me to learn about how these combat flight simulators were built back when the computer's resources were much more constrained and the developers had to focus on playability and not flashy graphics. 
+More than anything, this utility serves as an archaeology tool for me to learn about how these combat flight simulators were built back when the computer's resources were much more constrained and the developers had to focus more on playability and not rely on flashy graphics. 
 
 ## Quick reference
 
