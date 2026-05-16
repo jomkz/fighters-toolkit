@@ -8,6 +8,8 @@ the Jane's combat simulator family.
 - Advanced Tactical Fighters (1996)
 - U.S. Navy Fighters (1994)
 
+> WARNING: This utility is a work in progress and may not function as intended, especially in areas that are not fully understood yet. This could lead to loss of data, so back up your files first and use at your own risk!
+
 ## Why this exists
 
 The original FATK (DuoSoft 1998) is a 16-bit app that won't run natively on 64-bit Windows and had some useability issues by modern standards.
@@ -19,6 +21,8 @@ Fighters Toolkit provides:
 - A **static C++ library** (`ft_lib`) — embed in any GUI, script via ctypes, link from C#
 
 More than anything, this utility serves as an archaeology tool for me to learn about how these combat flight simulators were built back when the computer's resources were much more constrained and the developers had to focus more on playability and not rely on flashy graphics. 
+
+
 
 ## Quick reference
 
