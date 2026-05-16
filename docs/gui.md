@@ -15,13 +15,24 @@ Three-panel window:
 | Center — Editor | Form/text/timeline editor for the selected record |
 | Right — Preview | Live image preview (PIC, RAW screenshots) |
 
-Menu bar: **File** (open LIB, set FA install dir, exit) · **Tools** (install session as FA_0.LIB) · **Help**
+Menu bar: **File** · **View** · **Tools** · **Help**
+
+| Menu | Items |
+|---|---|
+| File | Open LIB… (`Ctrl+L`), Open File… (`Ctrl+F`), Recent Files, Close / Close All, Preferences…, Exit |
+| View | Expand All, Collapse All (LIB browser sessions) |
+| Tools | Install `<session>` as FA_0.LIB |
 
 ## Library & Project Management
 
-- Open FA / USNF97 / ATF Gold `.LIB` files
+- Open FA / USNF97 / ATF Gold `.LIB` files; open loose files directly (RAW, PLT, PIC, audio, BRF formats)
+- Multiple files open simultaneously; each appears as a collapsible session in the LIB browser
 - Browse library contents with type labels (Aircraft, Ordnance, Image, Audio, Mission, …) and file sizes
 - Filter records by name or type
+- Session table height is individually resizable by dragging the handle below each session; double-click the handle to snap to full height
+- Right-click a session header for per-session Close and Install options
+- Right-click empty browser space (or use View menu) for Expand All / Collapse All
+- Select a session to enable File → Close `<name>`; File → Close All closes everything
 - Extract individual records or extract the entire LIB via the CLI (`ft lib unpack`)
 - Patch edited records back into the in-memory LIB
 - Install the modified LIB as `FA_0.LIB` in the configured FA install directory (one-click override)
@@ -55,8 +66,10 @@ mapped), and annotation (units, enum values). Changes are patched back via
 ## Audio Editing (11K / 5K / 8K)
 
 - Waveform display (downsampled to 512 points for performance)
-- In-app playback via Windows `PlaySound` API
-- Stop playback
+- In-app playback via Windows `waveOut` API with real-time position tracking
+- Play, pause/resume, and stop controls
+- Animated playhead showing current position; left-click or drag to seek; right-click to pause at position
+- Playhead color indicates state: green = playing, yellow = paused, grey = stopped
 - Export raw PCM → WAV
 - Import WAV → raw PCM (any sample rate; stored at the file's native rate)
 - Sample rate and duration shown in header
@@ -65,7 +78,8 @@ mapped), and annotation (units, enum values). Changes are patched back via
 
 - Full-featured text editor for `.M` (mission), `.MM` (mission map), and `.MT` (briefing) files
 - All three formats are plain ASCII — edits round-trip losslessly
-- Resizable editor pane; Tab key preserved for indentation
+- Horizontal and vertical scrolling; long lines are fully reachable without wrapping
+- Tab key preserved for indentation
 - Save commits the text bytes back into the LIB session
 
 ## Cutscene Editing (SEQ)
@@ -108,8 +122,12 @@ Identity block fields (all editable):
 
 ## Settings / Preferences
 
-- **FA install directory** — set via File → Choose FA Install Dir; used by the one-click LIB install
-- External tool integration, window color scheme, and additional preferences: planned (Phase 3).
+All settings persist automatically in `ft-gui.ini` (same directory as the executable) across restarts.
+
+- **FA install directory** — set via File → Preferences; used by the one-click LIB install
+- **Recent files** — last 5 opened files; accessible from File → Recent Files; cleared from the same submenu
+- **Window size and position** — restored on next launch; falls back to centered if the saved position is off-screen
+- External tool integration and window color scheme: planned (Phase 3).
 
 ## Building
 
