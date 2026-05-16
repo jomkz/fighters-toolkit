@@ -13,6 +13,10 @@ build/
 *.jpg
 *.jpeg
 
+# ImGui layout state
+imgui.ini
+ft-gui.ini
+
 # Visual Studio
 .vs/
 *.user

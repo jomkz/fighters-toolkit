@@ -108,6 +108,8 @@ void App::Draw() {
 // ---------- Menu bar ----------
 
 void App::DrawMenuBar() {
+    bool openAbout  = false;
+
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Open LIB...", "Ctrl+O"))  OpenLibDialog();
@@ -132,8 +134,7 @@ void App::DrawMenuBar() {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help")) {
-            if (ImGui::MenuItem("About"))
-                ImGui::OpenPopup("##About");
+            if (ImGui::MenuItem("About")) openAbout = true;
             ImGui::EndMenu();
         }
 
@@ -145,6 +146,10 @@ void App::DrawMenuBar() {
         }
         ImGui::EndMenuBar();
     }
+
+    // Open popups after EndMenuBar so they register in the host window context.
+    if (openAbout)            ImGui::OpenPopup("##About");
+    if (!m_dupLibPath.empty()) ImGui::OpenPopup("##DupLib");
 
     // Duplicate LIB popup
     if (ImGui::BeginPopupModal("##DupLib", nullptr,
@@ -195,7 +200,6 @@ void App::OpenLibDialog() {
     for (const auto& s : sessions) {
         if (fs::equivalent(fs::path(s.path), fs::path(path))) {
             m_dupLibPath = fs::path(path).filename().string();
-            ImGui::OpenPopup("##DupLib");
             return;
         }
     }

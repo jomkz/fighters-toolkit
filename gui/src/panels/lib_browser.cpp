@@ -85,10 +85,13 @@ void DrawLibBrowser(App& app) {
         // Right-click context on the library node
         if (ImGui::BeginPopupContextItem()) {
             if (ImGui::MenuItem("Close")) {
-                if (open) ImGui::TreePop();
-                open = false;
-                app.sessions.erase(app.sessions.begin() + si);
                 ImGui::EndPopup();
+                if (open) ImGui::TreePop();
+                if (app.editor.libIdx == si)
+                    app.editor = EditorState{};
+                else if (app.editor.libIdx > si)
+                    app.editor.libIdx--;
+                app.sessions.erase(app.sessions.begin() + si);
                 return;
             }
             if (ImGui::MenuItem("Install as FA_0.LIB",
