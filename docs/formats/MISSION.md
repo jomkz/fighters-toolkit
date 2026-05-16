@@ -219,3 +219,13 @@ same line (space-separated) or on subsequent lines until reset.
 | `..underline` | Reset underline (double-dot prefix resets a directive) |
 
 Multiple directives may appear on the same line: `.center .underline .header`.
+
+---
+
+## Applications
+
+`.M` / `.MM` files require `ft mission unpack` → edit → `ft mission pack`. `.MT` files
+are plain ASCII and can be opened directly.
+
+- **VS Code** — free, cross-platform; multi-file search useful for tracking object names and map references across missions
+- **Notepad++** — free, Windows; lightweight for quick briefing text edits

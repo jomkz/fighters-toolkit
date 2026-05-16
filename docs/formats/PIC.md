@@ -100,3 +100,14 @@ The `$` and `_` prefixes are engine conventions embedded in the filenames stored
   accepts format=0 in place of any sub-format, including JPEG originals.
 - Keep image dimensions unchanged -- the engine does not resize at load time.
 - Pixels are quantized to the nearest palette color on re-encode; alpha < 128 maps to 0xFF.
+
+---
+
+## Applications
+
+Use `ft pic unpack` to convert to PNG, edit, then `ft pic pack` to re-encode.
+
+- **GIMP** — free, cross-platform; handles indexed-color and palette-aware editing well
+- **Paint.NET** — free, Windows; simple and fast for texture touch-ups
+- **Photoshop** `$` — industry standard; use 8-bit indexed mode to stay within palette
+- **Affinity Photo** `$` — one-time purchase alternative to Photoshop

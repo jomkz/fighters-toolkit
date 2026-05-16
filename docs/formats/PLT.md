@@ -57,3 +57,14 @@ contains null-terminated strings for:
 
 - [BRF.md](BRF.md) — `.PT` (plane type) and `.JT` (ordnance) records referenced by name
 - [MISSION.md](MISSION.md) — `.MM` map/campaign files referenced by name
+
+---
+
+## Applications
+
+The identity block (offsets `0x01`–`0xAF`) is fully mapped and patchable with a hex
+editor. The stats block (`0xB0`–`0x0D7E`) is pending a second differential pass.
+
+- **FATK** — free (abandonware, 1998); original GUI tool with full pilot editing support; requires a compatibility layer on 64-bit Windows
+- **HxD** — free, Windows; use with the field table above for manual patching
+- **010 Editor** `$` — paid; binary templates allow structured editing once the full layout is documented

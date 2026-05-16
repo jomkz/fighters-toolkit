@@ -84,3 +84,13 @@ ft seq dump   <file.SEQ>              # pretty-print events to stdout
 ft seq unpack <file.SEQ> [-o out.txt] # write editable text
 ft seq pack   <in.txt>   -o <out.SEQ> # write binary SEQ
 ```
+
+---
+
+## Applications
+
+SEQ files are plain ASCII — open and edit directly, no conversion step needed.
+
+- **VS Code** — free; multi-file find/replace useful for batch renaming bitmap or sound references
+- **Notepad++** — free, Windows; column editing helps with tab-aligned time fields
+- **Notepad / TextEdit** — free, built-in; sufficient for small edits

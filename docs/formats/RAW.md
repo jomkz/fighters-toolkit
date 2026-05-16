@@ -49,3 +49,15 @@ To convert a `.RAW` to a standard image:
 3. Derive height: `(filesize − 800) / width`.
 4. Read `width × height` bytes of pixel indices.
 5. Map each index through the palette to produce RGB output.
+
+---
+
+## Applications
+
+Use `ft raw unpack` to convert to PNG. There is no pack command yet — converted images
+are for viewing and reference only.
+
+- **GIMP** — free, cross-platform
+- **Paint.NET** — free, Windows
+- **Photoshop** `$` — industry standard
+- **Affinity Photo** `$` — one-time purchase alternative to Photoshop

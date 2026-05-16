@@ -22,3 +22,13 @@ edited `.RTF`/`.INF` back into a custom `FA_0.LIB` using `ft lib pack`.
 When authoring new content, save as RTF 1.x. The in-game renderer is the Windows 3.1
 RichEdit control and does not support advanced RTF features (embedded images, tables,
 complex styles). Stick to plain text with basic formatting (bold, italic, font size).
+
+---
+
+## Applications
+
+INF files are standard RTF — open and edit directly, no conversion step needed.
+
+- **LibreOffice Writer** — free, cross-platform; save as RTF 1.x via *File → Save As*
+- **WordPad** — free, built-in on Windows; reliable for basic RTF editing
+- **Microsoft Word** `$` — broadest RTF compatibility; remember to save as `.rtf`, not `.docx`

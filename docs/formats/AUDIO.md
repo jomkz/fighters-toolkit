@@ -114,3 +114,14 @@ the audio filename the engine looks up in the LIB. To replace in-game music:
 To create a `.5K` variant: pack at 11025 Hz after doubling playback speed 2×, then
 rename the extension to `.5K`. The engine plays it at half rate, yielding the correct
 pitch with reduced quality.
+
+---
+
+## Applications
+
+Use `ft audio unpack` to convert to WAV, edit, then `ft audio pack` to re-encode.
+Audacity can also import the raw PCM file directly without the `ft` step (*File →
+Import → Raw Data*: signed 8-bit, mono, sample rate from extension).
+
+- **Audacity** — free, cross-platform; raw import, noise reduction, pitch/tempo tools
+- **Adobe Audition** `$` — paid; professional mastering and spectral repair

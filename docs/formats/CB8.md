@@ -184,3 +184,15 @@ MRFA  — trailing audio
 
 JANELOGO.CB8 (6,496,064 bytes): VooM at offset 14812 with 466 index entries
 (chunk_size 7476 = 20 + 466×16). Frame 0 offset: 22288, duration: ~31.1 s @ 15 fps.
+
+---
+
+## Applications
+
+`ft cb8 frames` extracts individual frames as PNG images. There is no repack command —
+frame-level edits only.
+
+- **GIMP** — free, cross-platform; batch script (`File → Script-Fu`) useful for processing many frames
+- **Paint.NET** — free, Windows
+- **Photoshop** `$` — industry standard; *Image Processor* script for batch frame edits
+- **Affinity Photo** `$` — one-time purchase alternative to Photoshop

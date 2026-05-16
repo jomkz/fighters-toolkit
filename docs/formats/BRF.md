@@ -303,3 +303,13 @@ ft gas info / unpack / pack
 ```
 
 Example: `ft pt info F16C.PT` → thrust, max_speed, fuel, stall speed, ceiling.
+
+---
+
+## Applications
+
+BRF files are plain ASCII — open and edit directly after `ft unpack`, no further conversion needed.
+
+- **VS Code** — free; multi-file search useful when cross-referencing `.PT` hardpoint names against `.JT` definitions
+- **Notepad++** — free, Windows; lightweight for quick field edits
+- **Notepad / TextEdit** — free, built-in; sufficient for small edits

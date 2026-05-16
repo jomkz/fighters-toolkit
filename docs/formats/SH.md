@@ -360,3 +360,17 @@ before importing back into FASHion.
 
 SH files with x86-only geometry (65/1275 in FA — see extraction results above) cannot
 be edited with FASHion and require direct x86 disassembly for modification.
+
+---
+
+## Applications
+
+Use `ft sh unpack` to export to Wavefront OBJ. There is no pack command — OBJ export
+is for inspection and reference. For geometry edits, use the FASHion + SketchUp 8
+community workflow described above.
+
+- **Blender** — free, cross-platform; best option for inspecting and measuring exported OBJ geometry
+- **MeshLab** — free, cross-platform; lightweight viewer with basic mesh statistics
+- **FASHion** — free, FA-specific; vertex repositioning only (see workflow above)
+- **SketchUp 8** — free (legacy version required by FASHion plugin); use alongside FASHion
+- **3ds Max** `$` — paid; full mesh editing if a pack command is added in future

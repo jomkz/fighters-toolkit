@@ -21,3 +21,13 @@ uint8_t to_8bit(uint8_t v6) { return (v6 << 2) | (v6 >> 6); }
   `FA_2.LIB` and must be extracted before decoding paletted PIC files.
 - Each game version (USNF, ATF, FA) ships its own palette -- do not mix them.
 - Palette index **0xFF (255)** is reserved as transparent across all PIC sub-formats.
+
+---
+
+## Applications
+
+No standard image editor reads the raw 6-bit VGA palette format directly. Use a hex
+editor to view or patch individual entries (9 bytes per color: R, G, B at 6-bit scale).
+
+- **HxD** — free, Windows; lightweight and fast for small binary files like `.PAL`
+- **010 Editor** `$` — paid; scripting and binary templates allow structured palette browsing

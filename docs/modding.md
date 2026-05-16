@@ -154,3 +154,62 @@ altitude_ft      = altitude_as_read      # already in feet
   at 256 colors or less for best fidelity.
 - Test mods by placing the modified `.LIB` in the install directory. The engine searches
   there before the CD, so you can override without burning a disc.
+
+---
+
+## Recommended Tools
+
+> `$` = paid software. Free alternatives are listed first within each category.
+
+### Text editors
+For SEQ, BRF (.OT/.NT/.PT/.JT/.SEE/.ECM/.GAS), mission text (.MT), and unpacked mission files.
+
+| Tool | Platform | Notes |
+|------|----------|-------|
+| [VS Code](https://code.visualstudio.com/) | Win / Mac / Linux | Multi-file search, find/replace across a full LIB unpack |
+| [Notepad++](https://notepad-plus-plus.org/) | Windows | Lightweight; column editing useful for SEQ time fields |
+| Notepad / TextEdit | Windows / macOS | Built-in; sufficient for small edits |
+
+### Image editors
+For PIC textures and CB8 frames (after `ft pic unpack` / `ft cb8 frames`). Also for RAW screenshots (`ft raw unpack`).
+
+| Tool | Platform | Notes |
+|------|----------|-------|
+| [GIMP](https://www.gimp.org/) | Win / Mac / Linux | Handles indexed-color well; batch scripting via Script-Fu |
+| [Paint.NET](https://www.getpaint.net/) | Windows | Simple and fast for texture touch-ups |
+| [Photoshop](https://www.adobe.com/products/photoshop.html) `$` | Win / Mac | Industry standard; use 8-bit indexed mode |
+| [Affinity Photo](https://affinity.serif.com/photo/) `$` | Win / Mac | One-time purchase; strong alternative to Photoshop |
+
+### Audio editors
+For FA audio files (after `ft audio unpack` to WAV).
+
+| Tool | Platform | Notes |
+|------|----------|-------|
+| [Audacity](https://www.audacityteam.org/) | Win / Mac / Linux | Free; can also import raw PCM directly (*File → Import → Raw Data*: signed 8-bit, mono) |
+| [Adobe Audition](https://www.adobe.com/products/audition.html) `$` | Win / Mac | Paid; professional mastering and spectral repair |
+
+### 3D editors
+For shape inspection (after `ft sh unpack` to OBJ). Geometry editing requires the FASHion + SketchUp 8 community workflow — see [SH.md](formats/SH.md).
+
+| Tool | Platform | Notes |
+|------|----------|-------|
+| [Blender](https://www.blender.org/) | Win / Mac / Linux | Free; best for inspecting and measuring OBJ exports |
+| [MeshLab](https://www.meshlab.net/) | Win / Mac / Linux | Free; lightweight mesh viewer with basic statistics |
+| FASHion | Windows | Free (FA-specific, community tool); vertex repositioning only |
+| SketchUp 8 | Windows | Free (legacy version required by FASHion plugin) |
+| [3ds Max](https://www.autodesk.com/products/3ds-max/) `$` | Windows | Paid; full mesh editing |
+
+### Hex editors
+For PAL files and binary formats without full ft support (PLT pilot saves, FBC).
+
+| Tool | Platform | Notes |
+|------|----------|-------|
+| [HxD](https://mh-nexus.de/en/hxd/) | Windows | Free; fast and straightforward |
+| [010 Editor](https://www.sweetscape.com/010editor/) `$` | Win / Mac / Linux | Paid; binary templates enable structured editing |
+
+### FA-specific tools
+
+| Tool | Notes |
+|------|-------|
+| **ft** (this toolkit) | Primary CLI for all LIB, PIC, audio, mission, shape, and screenshot operations |
+| **FATK** (DuoSoft 1998) | Original GUI toolkit; free (abandonware). Does not run natively on 64-bit Windows — requires a compatibility layer. Supports pilot editing and project-based LIB management. |

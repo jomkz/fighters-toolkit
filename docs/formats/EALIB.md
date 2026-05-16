@@ -142,3 +142,10 @@ static const int lenextra[] = {0,0,0,0,0,0,0,0, 1, 2, 3, 4,  5,  6,  7,  8};
 `CACHE/LIBPTR.*` index files to record which `.LIB` a given asset lives in. Note that
 `FA_10B.LIB` maps to ID `"AB"` and `FA_11.LIB` to `"41"` — these do not match the
 filename suffix, so the IDs appear to be opaque tokens rather than derived from the name.
+
+---
+
+## Applications
+
+- **ft** — the fighters-toolkit CLI; primary tool for all LIB operations (`unpack`, `pack`, `patch`, `ls`)
+- **FATK** — free (abandonware, 1998); original GUI tool with project-based LIB editing; requires a compatibility layer on 64-bit Windows
