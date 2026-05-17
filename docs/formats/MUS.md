@@ -79,16 +79,47 @@ Group 1 (low-intensity, 20 tracks): `4 6 107 108 109 18 110 116 117 118 119 24 2
 
 Group 2 (high-intensity, 6 tracks): `9 38 62 65 67 19`
 
+## Playback Architecture (Confirmed via Ghidra)
+
+Traced from `_SEQmusic` (`0x00446B70`), `?MusicOn` (`0x004329E0`), `?MusicVolume` (`0x00432B40`) in FA.EXE.
+
+### Call chain
+
+```
+_SEQmusic(name, seq_idx)
+  → appends name to base path (DAT_004f4f6c) to form "M_AIR.MUS" etc.
+  → calls MusicOn(filename, seq_idx)
+      → FUN_004a6ae0(filename, 0x10c)   — loads MUS DLL from LIB archive
+      → _AIL_allocate_sequence_handle   — allocate Miles Sound System handle
+      → _AIL_init_sequence(handle, mus_data, seq_idx)  — pass MUS CODE section to AIL
+      → _AIL_start_sequence(handle)     — begin playback
+```
+
+**The MUS CODE section is passed directly to the Miles Sound System (AIL).** FA does not interpret the FA/FB/FC/FD/FE bytes itself — Miles processes them natively as XMIDI or MSS sequence data. The sub-opcode semantics (`FA 0x19`, `FA 0x21`, etc.) are Miles-internal and cannot be decoded from FA.EXE alone.
+
+### Volume
+
+`?MusicVolume(vol)` maps the 0–100 game volume scale to AIL's 0–127 range:
+```
+AIL_set_XMIDI_master_volume(handle, vol * 127 / 100)
+```
+
+### `_SEQfadein` / `_SEQfadeout`
+
+These (`0x00446890` / `0x00446910`) are **palette (screen) fades**, not music fades. They operate on a 768-byte RGB palette table (256 × 3 bytes at `DAT_00583dc0`). They are unrelated to MUS audio.
+
+### `seq_idx` parameter
+
+The `short param_2` passed through `_SEQmusic` → `MusicOn` → `_AIL_init_sequence` is the **AIL sequence index** — which section of the XMIDI data to start playback from. Normally 0 (first sequence).
+
 ## Toolkit Roadmap
 
-- New `cli/cmd_mus.cpp` — `ft mus dump <file.MUS>` prints decoded opcode stream and resolves `<idx>` values to XMI filenames using the index rule above
-- No lib codec needed — MUS is pure bytecode; the dump walks the opcode stream
+- New `cli/cmd_mus.cpp` — `ft mus dump <file.MUS>` prints the raw opcode stream and resolves `FB <idx>` values to XMI filenames using the index rule above
+- No lib codec needed — MUS is passed to AIL as-is; the dump walks the byte stream
 
-## TODO — Deep Dive
+## TODO
 
-- Decode `FA` sub-opcode meanings (volume, fade, tempo) — confirmed sub-values: `0x19`, `0x21`, `0x32`, `0x50`; semantics need FA.SMS symbol cross-reference
-- Decode `FE`/`FD` branch conditions — argument likely encodes game-state enum; cross-reference FA.SMS
-- Clarify `FB` 3-byte vs 4-byte form — does mode byte determine terminator presence?
+- Decode FA/FB/FC/FD/FE sub-opcode semantics — these are Miles Sound System XMIDI extensions processed by AIL, not FA game code; requires MSS documentation or Miles SDK headers to fully decode
 
 ## Related
 
