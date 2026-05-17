@@ -4,7 +4,7 @@ FA_1.LIB contains 15 `.FNT` files. These define the bitmapped fonts used for HUD
 
 ## Format
 
-Win32 PE DLL. File sizes vary — `4X12.FNT` decompresses to **12800 bytes** (0x3200). The large size relative to other 4608-byte overlays reflects embedded glyph bitmap data covering the full printable ASCII range.
+Win32 PE DLL. File sizes vary — `4X12.FNT` decompresses to **12800 bytes** (0x3200). The large size relative to other 4608-byte overlays reflects the glyph function code covering the full printable ASCII range.
 
 ## File Inventory
 
@@ -34,50 +34,73 @@ The name prefix encodes context (`HUD`, `WIN`, `MAP`) and suffix may encode loca
 |-----|-------|
 | FA_1.LIB | 13 |
 
-## CODE Section Layout (Partially Confirmed)
+## CODE Section Layout (Confirmed)
 
-FNT files use **Phar Lap PE format** (signature `PL\0\0`). No imports. The CODE section contains a **glyph pointer table** followed by variable-length glyph bitmap data.
+FNT files use **Phar Lap PE format** (signature `PL\0\0`). No imports. The CODE section contains a **FONT struct** — a pointer table of compiled x86 glyph functions followed by a width table, then the glyph function bodies.
 
-### Pointer table
+### FONT struct
 
-Starts at CODE section offset 0 (VA 0x1000). Layout:
+Starts at CODE section offset 0 (VA 0x1000). Confirmed from tracing `@G_Print@16` in FA.EXE (`0x004986B0`), which accesses the loaded FNT DLL via the global `?cFont@@3PAUFONT@@A`:
 
 ```
-u32  header_constant      (value = 7 in all observed FNT files — likely format version)
-u32  glyph_va[256]        one VA per character, ASCII 0–255
+u32  font_height          height of all glyphs in this font, in pixels
+u32  glyph_fn[256]        VAs of compiled glyph functions, one per ASCII 0–255
+u32  glyph_width[256]     advance width of each glyph in pixels
 ```
 
-Control characters (ASCII 0–31) each have a VA pointing to one of the 32 consecutive `0xC3` bytes at VA 0x1804–0x1823. All of those bytes are `0xC3` (the blank glyph marker), so all control chars render as blank regardless of which specific VA they hold.
+- `cFont[0]` — font height (used in `@G_Print@16` clip bounds check)
+- `cFont[char + 1]` — called as a function pointer: `(*(code *)cFont[char + 1])(dst_ptr)`
+- `cFont[char + 0x101]` — advance width; passed to `_G_Blit@36` as the glyph width
 
-ASCII 32 (' ', space) also maps to a `0xC3` byte at VA 0x1824 — space is a blank glyph.
+Total struct: 1 + 256 + 256 = 513 `u32` values = **2052 bytes** minimum before glyph bodies.
 
-Printable character data begins at VA 0x1825.
+### Glyph functions
 
-### Glyph encoding
+**Each glyph is a compiled x86 function**, not encoded bitmap data. `@G_Print@16` calls each glyph function directly, passing the destination framebuffer position in registers.
 
-**`0xC3` = blank/empty glyph** (single-byte; the engine reads it as "advance with no pixels").
+**Confirmed calling convention** (traced from `@G_Print@16` at `0x004986B0` + glyph body at raw file offset `0xA25`):
 
-All other glyphs use a variable-length encoding built from four recurring byte values:
+| Register | Role |
+|----------|------|
+| `EDI` | Current row pointer in destination framebuffer |
+| `ECX` | Scanline stride (bytes per row) |
+| `AL` | Pixel color value |
 
-| Byte | Binary |
-|------|--------|
-| `0x03` | 00000011 |
-| `0xF9` | 11111001 |
-| `0x88` | 10001000 |
-| `0x07` | 00000111 |
+**Instruction pattern:**
 
-The encoding is **not** raw 1-bpp row data — these values do not correspond to simple scanlines for a 4-pixel-wide cell. The same four values appear in both 4X6.FNT and 4X12.FNT in different orders, confirming a compact encoding (possibly nibble-packed rows + advance-width byte, or a custom RLE). Exact scheme requires tracing the glyph-drawing routine in FA.EXE.
+| Sequence | Meaning |
+|----------|---------|
+| `03 F9` = `ADD EDI, ECX` | Advance to next row |
+| `88 07` = `MOV [EDI], AL` | Write pixel at current position |
+| `ADD EDI, ECX` alone | Skip a blank row (no pixel written) |
+| `C3` = `RET` | End of glyph |
 
-4X6.FNT glyph for ASCII 33 ('!') — starts at VA 0x1825, 22 bytes before the next `0xC3`:
+**`0xC3` = `RET`** — the blank/space glyph is a single-byte function that returns immediately, writing nothing. Control characters (ASCII 0–31) and space (ASCII 32) all point to `0xC3` bytes (VA 0x1804–0x1824).
+
+Printable character functions begin at VA 0x1825 (raw file offset `0xA25`). Confirmed disassembly of ASCII 33 (`!`):
+
+```asm
+ADD  EDI, ECX      ; row 0 — lit (bar)
+MOV  [EDI], AL
+ADD  EDI, ECX      ; row 1 — lit
+MOV  [EDI], AL
+ADD  EDI, ECX      ; row 2 — lit
+MOV  [EDI], AL
+ADD  EDI, ECX      ; row 3 — blank
+ADD  EDI, ECX      ; row 4 — lit (dot)
+MOV  [EDI], AL
+ADD  EDI, ECX      ; row 5 — blank
+ADD  EDI, ECX      ; row 6 — trailing advance
+RET
 ```
-03 F9 88 07 03 F9 88 07 03 F9 88 07 03 F9 03 F9 88 07 03 F9 03 F9
-```
 
-4X12.FNT '!' starts at VA 0x1825 with a different byte order (same values, more bytes), confirming the 4X12 glyphs are taller/larger encodings of the same characters.
+7 row advances for a font named `4X6` suggests `cFont[0]` (font height) = 7 — the cell is 6 glyph rows + 1 inter-line spacing row. The raw bytes `{03 F9 88 07}` are two x86 instructions, not an encoded bitmap format.
+
+**Ghidra navigation note:** When importing a FNT file as a raw binary with base `0x1000`, the CODE section (file offset `0x200`) appears at Ghidra address `0x1200`. Loaded VAs (e.g. `0x1825`) correspond to Ghidra address `0x1000 + file_offset = 0x1000 + (VA - 0x1000 + 0x200)` = VA + `0x200`.
 
 ### $$DOSX metadata
 
-The $$DOSX section (512 bytes) contains a small header. Both 4X6.FNT and 4X12.FNT show identical $$DOSX values (`u16[4]=16, u16[5]=6`). Since the two files have different glyph heights but the same $$DOSX, these values are **not** per-file cell dimensions — they are system constants or encoding parameters shared by all FNT files.
+The $$DOSX section (512 bytes) contains a small header. Both 4X6.FNT and 4X12.FNT show identical $$DOSX values (`u16[4]=16, u16[5]=6`). These are system constants shared by all FNT files, not per-file cell dimensions.
 
 ## Toolkit Roadmap
 
@@ -87,12 +110,11 @@ Pointer table and glyph data layout are confirmed. Blocked on glyph encoding sch
 - New `cli/cmd_fnt.cpp` — `ft fnt unpack <file.FNT> -o <dir>/` extracts each glyph as a 1-bpp PNG; writes `metrics.csv` with `{char, width, height}` per row
 - GUI: `fnt_viewer.h/cpp` in `gui/src/editors/` for interactive glyph grid preview
 
-## TODO — Deep Dive
+## TODO
 
-- Decode exact glyph encoding scheme — bytes `{03, F9, 88, 07}` are confirmed code values (not raw pixels); nibble-packed rows, RLE, or advance-width encoding still unresolved; requires tracing the glyph-drawing routine in FA.EXE via Ghidra
-- Confirm per-glyph record size (are there inline width/height metrics, or is cell size fixed per FNT file?)
+- Confirm `cFont[0]` font height value by reading the pointer table header at raw file offset `0x200` — expected 7 for `4X6.FNT` based on glyph row count
 - Verify whether `00`/`01`/`11` suffix encodes locale, resolution, or style variant
-- Resolve count discrepancy: file inventory lists 15 files but LIB count shows 13
+- Resolve count discrepancy: file inventory lists 15 files but FA_1.LIB contains 13
 
 ## Related
 

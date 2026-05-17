@@ -42,19 +42,104 @@ The `CHOOSEAC.DLG` labels are the top-level game start menu items — displayed 
 
 DLG files use a **Phar Lap PE format** (signature `PL\0\0` instead of `PE\0\0`). There is no compiled x86 code — the CODE section is a **dispatch table** of fixed-size records.
 
-### Record structure (38 bytes each, empirically confirmed from CHOOSEAC.DLG)
+### Record structure (per-type, confirmed via Ghidra)
 
-| Offset | Size | Field |
-|--------|------|-------|
-| +0 | u32 | `thunk_va` — VA of the JMP thunk for the draw function (e.g. `_DrawAction`) |
-| +4 | u16 | `x` — screen x in pixels |
-| +6 | u16 | `y` — screen y in pixels |
-| +8 | u8[10] | padding (zeros) |
-| +18 | u16 | `width` — control width in pixels |
-| +20 | u32 | `str_va` — VA of null-terminated label string in CODE section |
-| +24 | u8[14] | trailing padding (zeros) |
+Each record begins with a `u32 thunk_va` that identifies the draw function. Remaining fields are type-specific — record sizes vary. All offsets below are from the start of the record (i.e. the same base as `thunk_va`).
 
 Label strings are packed consecutively after the dispatch table in the same CODE section.
+
+#### _DrawAction — 38 bytes
+
+| Offset | Type | Field |
+|--------|------|-------|
+| +0x00 | u32 | `thunk_va` |
+| +0x01 | u8 | `flags` — bit 7 = dim/dark colour variant |
+| +0x02 | u8[8] | unknown |
+| +0x0A | i16 | `x` |
+| +0x0C | u16 | `y` |
+| +0x0E | i16 | unknown |
+| +0x12 | i16 | unknown |
+| +0x14 | i16 | unknown |
+| +0x16 | i16 | unknown |
+| +0x17 | u8 | `action_type` — 1 = radio/checkbox, 3 = type-3, 4 = type-4, else = standard button |
+| +0x18 | i16 | `width_px` — control width in pixels |
+| +0x1A | u32 | `label_ptr` — ptr to label string or icon resource |
+| +0x1C | i16 | unknown |
+| +0x1E | u32 | `icon_ptr` |
+| +0x22 | i16 | `text_x` — text x offset within button |
+| +0x24 | i16 | `text_y` — text y offset within button |
+
+The empirically derived x/y offsets (+4, +6) in earlier documentation were incorrect; Ghidra confirms x at +0x0A, y at +0x0C. The 38-byte total size is confirmed by both methods.
+
+#### _DrawText — 22 bytes
+
+| Offset | Type | Field |
+|--------|------|-------|
+| +0x00 | u32 | `thunk_va` |
+| +0x01 | u8 | `flags` — bit 7 = dim variant |
+| +0x02 | u8[8] | unknown |
+| +0x0A | u32 | `text_ptr` — `char*` to label string |
+| +0x0E | u32 | `font_ptr` — font override (`0` → default `PANELFNT`/`PANELFND` loaded from bit 7 of `flags`) |
+| +0x12 | i16 | `x` |
+| +0x14 | i16 | `y` |
+
+#### _DrawFormattedText — 36 bytes
+
+| Offset | Type | Field |
+|--------|------|-------|
+| +0x00 | u32 | `thunk_va` |
+| +0x01 | u8[9] | unknown |
+| +0x0A | i16 | `x` |
+| +0x0C | i16 | `y` |
+| +0x0E | i16 | `width` |
+| +0x10 | i16 | `height` |
+| +0x12 | i16 | unknown |
+| +0x14 | i16 | unknown |
+| +0x16 | i16 | `visible_rows` — items per page |
+| +0x18 | i16 | `selection` — updated by engine at render time |
+| +0x1A | i16 | `current_item` |
+| +0x1C | i16 | `last_rendered` |
+| +0x1E | i16 | unknown |
+| +0x20 | u32 | `text_ptr` — `char**` string array |
+
+#### _DrawCampaignList — 36 bytes
+
+Same field layout as `_DrawFormattedText`. The render logic differs (rows are campaign entries with a highlight sprite from `CAMPHI.PIC`; row height is 0x4B px).
+
+#### _DrawRocker — 40 bytes
+
+| Offset | Type | Field |
+|--------|------|-------|
+| +0x00 | u32 | `thunk_va` |
+| +0x01 | u8[9] | unknown |
+| +0x0A | i16 | `x` |
+| +0x0C | i16 | `y` |
+| +0x0E | i16 | unknown |
+| +0x10 | i16 | unknown |
+| +0x12 | i16 | unknown |
+| +0x14 | i16 | unknown |
+| +0x16 | i16 | unknown |
+| +0x18 | i16 | unknown |
+| +0x1A | i16 | `up_value` — option index for up/left arrow |
+| +0x1C | i16 | `down_value` — option index for down/right arrow |
+| +0x1E | i16 | `current_value` |
+| +0x20 | i16 | unknown |
+| +0x22 | u32 | `parent_ref` — ptr to linked parent control for auto-positioning |
+| +0x26 | u8 | `size_flag` — non-zero = tall/large rocker variant |
+| +0x27 | u8 | pad |
+
+#### _DrawEditBox — 24 bytes
+
+| Offset | Type | Field |
+|--------|------|-------|
+| +0x00 | u32 | `thunk_va` |
+| +0x01 | u8[9] | unknown |
+| +0x0A | i16 | `char_count` — field width in characters |
+| +0x0C | i16 | `y` |
+| +0x0E | i16 | `x` |
+| +0x10 | i16 | `pixel_width` — computed at render: `char_count × 10 + 16`; written back to record |
+| +0x12 | i16 | `height` — always written as 24 (0x18) at render time |
+| +0x14 | u32 | `text_buffer` — `char*` to editable text |
 
 ### JMP thunks and state dispatch table
 
@@ -74,21 +159,7 @@ This same sequence appears in MUS CODE sections (after the `FC` opcode), confirm
 
 ### _cancelString and _okString (button label indirection)
 
-Records whose `thunk_va` points to the `_cancelString` or `_okString` thunk do **not** embed a string directly. The `str_va` field in those records holds the VA of the thunk itself, which the engine dereferences at runtime to call the engine's localized label function. Hex-dumping these records shows garbage if the `str_va` is treated as a code-section string pointer — it must be followed as an indirect call.
-
-### _DrawEditBox (confirmed different record size)
-
-`EDITNAME.DLG` hex dump confirms `_DrawEditBox` records use a different layout than `_DrawAction`:
-- `x=31`, `y=20`, `w=9` (width in characters, not pixels)
-- The record is shorter than 38 bytes; exact size not yet measured
-
-### _DrawText
-
-`str_va` appears at offset 0 of the record (rather than +20 as in `_DrawAction`). The remaining field layout differs — width and position fields are at different offsets.
-
-### Other control types
-
-`_DrawRocker` and `_DrawCampaignList` are confirmed present in `CALLSIGN.DLG`. Record sizes for these types are not yet measured.
+Records whose `thunk_va` points to the `_cancelString` or `_okString` thunk do **not** embed a string directly. The `label_ptr` field holds the VA of the thunk itself, which the engine dereferences at runtime to call the localized label function.
 
 ### CHOOSEAC.DLG decoded (main start screen)
 
@@ -117,11 +188,9 @@ Every DLG begins with one `_ChoosePreload` record (also 4-byte thunk + params) t
 
 ## TODO — Deep Dive
 
-- Measure exact record sizes for `_DrawRocker`, `_DrawEditBox`, `_DrawText` (confirmed different from `_DrawAction`'s 38 bytes)
-- Confirm `_DrawEditBox` width field units (characters vs pixels — currently reads as 9, likely characters)
-- Map `_DrawText` field offsets (str_va confirmed at offset 0; x/y/width positions unknown)
 - Map all 92 DLG filenames to their in-game screens
-- Decode `_ChoosePreload` params (bounding box vs dialog-type ID)
+- Decode `_ChoosePreload` params — `FUN_004897f0` only calls two helpers and decrements a counter; the bounding-box or dialog-type semantics are in the callers, not the record itself
+- Fill in the unknown fields at +0x02..+0x09 (common header gap) and the per-type unknowns above
 
 ## Related
 
