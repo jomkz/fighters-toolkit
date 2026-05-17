@@ -12,7 +12,7 @@ Loose file in the FA install directory — not packed into any LIB archive.
 Offset  Size  Field
 ------  ----  -----
 0x0000     4  count        u32 LE — number of symbol records (3829 = 0x0EF5)
-0x0004  N×8  records      N × { va: u32 LE, str_off: u32 LE }
+0x0004  N×8  records      N × { str_off: u32 LE, va: u32 LE }
 0x????     *  string_table null-terminated C strings, densely packed
 ```
 
@@ -56,6 +56,5 @@ A loader utility (`ft sms load` or similar) could automate this for Ghidra via i
 
 ## TODO
 
-- Write a `ft sms` subcommand that dumps the symbol table to CSV or imports it into a Ghidra project
 - Cross-reference selected VAs against FA.EXE to confirm the symbol map matches the shipped binary version
 - Identify which build configuration / PDB this map was generated from (check for debug vs. release indicators in the mangled names)
