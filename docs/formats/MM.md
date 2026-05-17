@@ -33,16 +33,20 @@ Sections appear in this order:
 
 ## Sides Block
 
-Defines faction alignment. Four variants observed across all 75 files:
+Defines faction alignment. Four variants across all 75 files:
 
-| Keyword | Entry count | Notes |
-|---------|-------------|-------|
-| `sides` | unknown | Rare |
-| `sides2` | 19 | Smaller theaters |
-| `sides3` | unknown | |
-| `sides4` | 64 | Most common; 64 × `$00`/`$80` values |
+| Keyword | Entry count | File count |
+|---------|-------------|------------|
+| `sides` | 18 | 9 |
+| `sides2` | 19 | 32 |
+| `sides3` | 24 | 9 |
+| `sides4` | 64 | 25 |
 
-Each entry is a tab-indented hex byte (`$00` or `$80`). Likely a flat faction relationship table — `$80` = hostile, `$00` = neutral/friendly.
+Each entry is a tab-indented hex byte: `$00` = neutral/friendly, `$80` = hostile to the player.
+
+The table is a **flat array indexed by faction code**: entry *i* = hostility of side code *i*. The number suffix (2/3/4) is a format version indicating how many faction codes are defined — each version is a strict superset of the previous (`sides2[0–18]` == `sides3[0–18]` == `sides4[0–18]`; `sides3[0–23]` == `sides4[0–23]`). Theaters added in later FA versions use a higher-numbered variant to cover newly introduced faction codes.
+
+The `nationality` field in `obj` blocks is **not** an index into this table — it is a cosmetic UI code (country flag/emblem in briefings) and can exceed 162, far beyond the 64-entry maximum.
 
 ---
 
@@ -55,7 +59,7 @@ Each `obj` block defines one static scene object. Terminated by a lone `.` line.
 | `type` | `<name>.OT` | Object type reference |
 | `pos` | `<x> <y> <z>` | World-space position |
 | `angle` | `<yaw> <pitch> <roll>` | Orientation in degrees |
-| `flags` | `<hex>` | Object state/behaviour flags |
+| `flags` | `<hex>` | Object state/behaviour flags (see below) |
 | `speed` | `<int>` | Initial speed |
 | `alias` | `<int>` | Unique object ID (negative integers) |
 | `nationality` | `<int>` | Primary faction code |
@@ -64,12 +68,36 @@ Each `obj` block defines one static scene object. Terminated by a lone `.` line.
 | `name` | `<str>` | Display name |
 | `color` | `<int>` | Color index |
 | `icon` | `<int>` | Map icon ID (`-1` = no icon) |
-| `react` | `<hex> <hex> <hex>` | Reaction/engagement flags |
+| `react` | `<hex> <hex> <hex>` | Hostile faction bitmask: three 16-bit words covering faction codes 0–47 (bit *n* set = react to faction *n* as hostile) |
 | `searchDist` | `<int>` | AI detection radius |
 | `skill` | `<int>` | AI skill level |
 | `tdic` | `<int>` | Tile dictionary index |
 | `special` | *(none)* | Marks object as a special/scripted entity |
 | `w_for` | `<int>` | Waypoint owner reference |
+
+### `flags` Bit Survey
+
+8 distinct values observed across all 75 files (8,373 `obj` blocks total):
+
+| Value | Bits | Object types | Count |
+|-------|------|--------------|-------|
+| `$0` | — | Decorative buildings, flags, landmarks (no game logic) | 471 |
+| `$1` | 0 | Fuel depots, bunkers, strips, flags (friendly?) | 968 |
+| `$3` | 0, 1 | Mobile military units — all `.NT` (AA guns, SAMs, fighters) | 232 |
+| `$401` | 0, 10 | Fuel depots, control towers, strips, flags | 5,524 |
+| `$403` | 0, 1, 10 | Mobile military units — all `.NT` | 241 |
+| `$601` | 0, 9, 10 | Named structures (carrier KING.OT, houses, factory) | 24 |
+| `$4003` | 0, 1, 14 | Runways (STRIP1, DTSTRP, STRIP5, STRIP7) | 906 |
+| `$4403` | 0, 1, 10, 14 | Runways (STRIP4, STRIP) | 2 |
+
+Confirmed bit meanings:
+- **Bit 0 (`$1`)** — present on all non-decorative objects; likely "active / participates in game logic"
+- **Bit 1 (`$2`)** — set on mobile units (`.NT`) and runways; "mobile or functional structure"
+- **Bit 14 (`$4000`)** — set only on runway strips; "landing surface"
+
+Tentative (requires Ghidra confirmation):
+- **Bit 10 (`$400`)** — distinguishes some objects from structurally identical ones without it (e.g. `$1` FUEL vs `$401` FUEL — possibly friendly vs hostile ownership)
+- **Bit 9 (`$200`)** — only on named/significant structures with bit 10 set; possibly "mission-critical target"
 
 ### Example
 
@@ -125,7 +153,7 @@ Like `tmap` but with a symbolic key encoding the position:
 tmap_named k<col3><row3> <col> <row>
 ```
 
-The key `k<col3><row3>` zero-pads column and row to 3 digits each (e.g. `k000004` = col 0, row 4). Present in maps that reference these tiles from scripts or other systems.
+The key `k<col3><row3>` zero-pads column and row to 3 digits each (e.g. `k000004` = col 0, row 4). The explicit `<col>` and `<row>` arguments are always identical to the values encoded in the key — they are redundant. Present in maps that reference these tiles from scripts or other systems.
 
 ---
 
@@ -148,6 +176,8 @@ waypoint2 <count>
 ```
 
 `count` is the number of waypoint entries that follow. Each entry begins with `w_index`. `w_pos2` has 5 arguments; the first two are always `0 0` in observed files.
+
+**`w_goal` values**: only `0` and `1` observed across all 75 files (192 waypoints total). `w_goal 0` always appears with `w_flags 1` and `w_speed 0` (stationary anchor/spawn point); `w_goal 1` appears with `w_flags 0`, a non-zero speed, and a `w_react` bitmask (active patrol waypoint). Exact goal-type semantics require Ghidra trace.
 
 ---
 
@@ -174,12 +204,16 @@ Values are `0` (passable) or `1` (blocked). `<id>` observed as 256 in all cases.
 
 ## TODO — Deep Dive
 
-- Confirm `sides` entry count semantics (is the number in `sides4` a version/type or faction count?)
-- Determine world-space coordinate scale and origin for `pos` / `view` values
-- Document all `flags` bit assignments for `obj` blocks
-- Clarify `tmap_named` second and third argument semantics (position vs tile_id/variant)
-- Survey all `w_goal` values to enumerate waypoint goal types
-- Confirm `tdic` id=256 meaning (tile type index into T2?)
+- Determine world-space coordinate scale and origin for `pos` / `view` values (requires Ghidra)
+- Confirm `obj flags` bit 10 and bit 9 semantics (friendly vs hostile ownership; mission-critical — requires Ghidra)
+- Confirm `tdic` id=256 meaning (tile type index into T2? — requires Ghidra)
+
+**Confirmed resolved:**
+- `sides` suffix = format version (not faction count); table is flat array indexed by faction code; each version is a strict superset ✓
+- `tmap_named` col/row arguments are redundant with key encoding ✓
+- `w_goal` values surveyed: only 0 (stationary anchor) and 1 (active patrol) ✓
+- `react` field = three 16-bit hostile-faction bitmasks covering codes 0–47 ✓
+- `obj flags` bits 0, 1, 14 confirmed ✓
 
 ## Related
 

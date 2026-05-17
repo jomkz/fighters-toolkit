@@ -14,19 +14,24 @@ All 21 filenames:
 - `CATFAIL.MC` — carrier takeoff failure condition
 - `TRAIN01.MC` — training mission condition
 - `UKR01.MC`, `UKR02.MC` — Ukraine campaign-level events
-- `EXTRA01.MC`, `FOO.MC` — extra/developer missions
+- `EXTRA01.MC` — legitimate mission condition (uses `@OBJAlias@8`, `@OBJGet@4`, `_MISSIONSuccess@0`; no test strings)
+- `FOO.MC` — developer timing test: embeds debug string `"The time is now >= 10 seconds!"`, uses `_currentTime` and `_MSGSendChatter@24` with `RADIOBP.5K` audio; name is a classic programmer placeholder
 
 ## Content
 
-String analysis of `CATFAIL.MC` and `UKR01.MC` reveals the mission condition API:
+String analysis of all `.MC` files reveals the mission condition API:
 
 | Import | Description |
 |--------|-------------|
 | `@OBJAlias@8` | Look up a game object by its alias ID |
+| `@OBJGet@4` | Get a game object by index (EXTRA01.MC) |
 | `_Dist@8` | Compute distance between two objects |
+| `_MISSIONSuccess@0` | Trigger mission success outcome |
+| `_MSGSendChatter@24` | Send a radio chatter message to the player |
 | `_OnTheGround@0` | Test whether an object is on the ground |
 | `_PopCurObj@0` | Pop the current object from the evaluation stack |
 | `_PushCurObj@4` | Push an object onto the evaluation stack |
+| `_currentTime` | Global: current game time in ticks |
 | `_playerId` | Global: the player's object ID |
 
 These are physics/world-state query functions — the `.MC` DLL polls game state each tick to detect mission trigger conditions (e.g. player landed, target destroyed, distance threshold crossed).
@@ -45,7 +50,7 @@ Win32 PE DLL. All observed `.MC` files decompressed to **4608 bytes**.
 
 - Disassemble `UKR01.MC` to trace the complete condition check logic and identify all object aliases it monitors
 - Determine how the `.CAM` file references or loads `.MC` files at mission start
-- Clarify `FOO.MC` and `EXTRA01.MC` — developer test missions or FA multiplayer extras
+- Clarify `EXTRA01.MC` purpose (multiplayer extra, bonus mission, or other)
 
 ## Related
 
