@@ -159,14 +159,16 @@ Arithmetic is valid in comparisons: `alt < turnRadius * 3`, `distToTgt < minSpee
 
 | Instruction | Signature | Description |
 |-------------|-----------|-------------|
-| `move` | `move <hdg> <alt> <any\|engageP> <corner\|maxSpeed\|cornerSpeed> <value>` | Fly to heading/altitude |
+| `move` | `move <hdg> <alt> <roll> <speed_mode> <value>` | Fly to heading/altitude at given bank angle |
 | `moveToAlt` | `moveToAlt <hdg> <alt> maxSpeed <value>` | Climb or descend to altitude |
 | `homePos` | `homePos <hdg> <alt> <alt2> corner <value>` | Return to home position |
-| `homeAngle` | `homeAngle <hdg> <alt> corner <value>` | Fly to home angle |
+| `homeAngle` | `homeAngle <hdg> <alt> <speed_mode> <roll> <value>` | Fly to home angle |
 | `jink` | `jink <hdg> <alt> <roll> <period> <count> <delay> <speed_mode> <value>` | Jinking evasive maneuver |
 | `circle` | `circle <cx> <cy> <cz> <radius> <alt> <speed>` | Orbit a point (AC130 only) |
 | `wm_break` | `wm_break <angle> engageP` | Break away from wingman |
 | `wm_approach` | `wm_approach <offset> <engageP\|int> corner` | Wingman approach |
+
+**`move` roll argument**: `any` = no bank constraint (engine picks optimal); `0` = wings level (upright); `180` = inverted. Comments in `F.AI` confirm: `move %a 0 180 corner 1` = "roll over on my back, staying horizontal"; `move %a + 180 0 0 corner 0` = "roll out to level". The `engageP` keyword is a valid value for the `<alt>` argument (altitude of the engage/attack waypoint), not the roll argument.
 
 ### Maneuvers
 
@@ -223,11 +225,22 @@ Engine-defined `switch` target labels (no `maneuver` string needed): `fastHigh`,
 |-----|-------|
 | FA_2.LIB | 9 |
 
+## .BI Companion Files
+
+Each `.AI` script has a companion `.BI` file of the same base name. All `.BI` files are **Win32 PE DLLs** (`MZ` header) — compiled bytecode loaded by the engine at runtime via `LoadLibrary`. The `.AI` text is the source; `.BI` is the compiled form. File sizes:
+
+| BI file | Size | AI source size |
+|---------|------|----------------|
+| AC130.BI, B.BI, HYDRO.BI, LARGE.BI, LINER.BI | 4,608 B | 960–3,970 B |
+| H.BI | 8,704 B | 12,412 B |
+| F.BI, F117.BI, MOTH.BI | 12,800 B | 18,423–20,616 B |
+
+BI sizes are smaller than the source text because the compiled DLL uses a compact bytecode representation. The compiler is internal to FA's toolchain and not distributed.
+
 ## TODO — Deep Dive
 
-- Locate the script parser/interpreter in FA.EXE (xref to `.AI` filename loading)
-- Confirm full `move` / `jink` argument semantics (heading reference points, speed modes)
-- Confirm relationship between `.AI` script and companion `.BI` overlay
+- Locate the script parser/interpreter in FA.EXE (xref to `.AI` filename loading) and confirm the full `move`/`jink` argument semantics for `<speed_mode>` and `<value>` fields
+- Determine `.BI` bytecode format (opcode table, argument encoding) via Ghidra trace
 
 ## Related
 
