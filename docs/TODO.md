@@ -26,13 +26,13 @@ For each item: load the overlay DLL in Ghidra, import the FA.SMS symbol list to 
 
 These fields are documented structurally but their numeric semantics need calibration.
 
-- **SEE range encoding**: Calibrate `^XXXXXX` fixed-point range unit against known radar/weapon ranges. See [formats/SEE.md](formats/SEE.md).
-- **SEE seeker type byte**: Confirm full enum (0=visual, 1=IR, 3=radar confirmed; what is 2?). See [formats/SEE.md](formats/SEE.md).
-- **SEE dual-lobe meaning**: Does primary/secondary lobe map to search vs. track mode, or two radar bands? See [formats/SEE.md](formats/SEE.md).
-- **JT PROJ_TYPE fields**: Decode warhead capability flags dword, agility byte sequence, hit-probability bytes. See [formats/JT.md](formats/JT.md).
-- **ECM effectiveness bytes**: Decode the three groups of three bytes (RWR bands? jamming categories? decoy effectiveness?). See [formats/ECM.md](formats/ECM.md).
-- **GAS capacity word**: Decode internal unit (not US gallons directly). See [formats/GAS.md](formats/GAS.md).
-- **OT/NT capability flags**: Decode `ot_flags` dword and `obj_class` word fully. See [formats/OT.md](formats/OT.md), [formats/NT.md](formats/NT.md).
+- ~~**SEE range encoding**~~: **Resolved** — 1 unit = 1 foot (6076 units/nm). See [formats/SEE.md](formats/SEE.md).
+- ~~**SEE seeker type byte**~~: **Resolved** — 0=visual, 1=laser, 2=IR/EO, 3=radar. See [formats/SEE.md](formats/SEE.md).
+- **SEE dual-lobe meaning**: Primary lobe = search mode, secondary = track/lock (partially confirmed from range/angle comparison; switch trigger still needs Ghidra). See [formats/SEE.md](formats/SEE.md).
+- **JT PROJ_TYPE fields**: Bits 16–17 of warhead flags confirmed (AA/AG capability); seeker byte enum confirmed; agility/hit-probability bytes still unmapped. See [formats/JT.md](formats/JT.md).
+- **ECM effectiveness bytes**: Three variable positions identified (bytes 1, 5, 9 in 9-byte block); five fixed constants identified; roles still need Ghidra. See [formats/ECM.md](formats/ECM.md).
+- **GAS capacity word**: Remains undecoded — does not map cleanly to gallons, liters, or known units. Cross-reference `.PT` internal fuel field to derive scale factor. See [formats/GAS.md](formats/GAS.md).
+- **OT/NT capability flags**: `obj_class` partially confirmed ($40=scenery, $100=ground structure, $2000=naval). `ot_flags` bit 0 = targetable confirmed; full bit map needs Ghidra. See [formats/OT.md](formats/OT.md), [formats/NT.md](formats/NT.md).
 
 ---
 
