@@ -148,9 +148,9 @@ Advisory icon names (label strings embedded in the HUD file, order confirmed fro
 
 | Icon | Bit | Struct offset | Label in A7.HUD | Label in F22.HUD | Subsystem |
 |------|-----|---------------|-----------------|------------------|-----------|
-| A | `0x100` | `+0x24D` | `GEAR` | `GEAR` | `FUN_00451b60` — gear actuator (input 0x66) |
-| B | `0x080` | `+0x255` | `FLAP` | `FLAP` | `FUN_00451d70` — flap actuator (input 0x62) |
-| C | `0x040` | `+0x245` | `BRAKE` | `BRAKE` | `FUN_00451c90` — speedbrake actuator (input 0x67) |
+| A | `0x100` | `+0x245` | `GEAR` | `GEAR` | `FUN_00451b60` — gear actuator (input 0x66) |
+| B | `0x080` | `+0x24D` | `FLAP` | `FLAP` | `FUN_00451d70` — flap actuator (input 0x62) |
+| C | `0x040` | `+0x255` | `BRAKE` | `BRAKE` | `FUN_00451c90` — speedbrake actuator (input 0x67) |
 | D | `0x200`/`0x400` | `+0x25D` | `HOOK` | `BAY` | `FUN_00452630` (tailhook, input 0x6f) / `FUN_00451c30` (bay door, input 0x68) |
 
 The command dispatcher is `FUN_00414690`. Each input case passes `(current_bit == 0)` to the actuator, which deploys the surface when TRUE (bit clear = currently retracted) and retracts it when FALSE (bit set = currently deployed). The actuator function updates the 3D model state and writes the advisory bit.

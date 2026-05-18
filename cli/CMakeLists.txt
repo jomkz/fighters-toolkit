@@ -12,6 +12,12 @@ add_executable(ft
     cmd_sms.cpp
     cmd_t2.cpp
     cmd_plt.cpp
+    cmd_pal.cpp
+    cmd_inf.cpp
+    cmd_hud.cpp
+    cmd_lay.cpp
+    cmd_fnt.cpp
+    cmd_mus.cpp
 )
 
 target_link_libraries(ft PRIVATE ft_lib)

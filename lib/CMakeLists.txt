@@ -14,6 +14,11 @@ add_library(ft_lib STATIC
     src/sms.cpp
     src/t2.cpp
     src/plt.cpp
+    src/inf.cpp
+    src/hud.cpp
+    src/pe.cpp
+    src/lay.cpp
+    src/fnt.cpp
 )
 
 target_include_directories(ft_lib
