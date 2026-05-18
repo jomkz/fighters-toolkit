@@ -43,12 +43,14 @@ EA.CFG is 347 bytes — small enough to fully map by toggling one setting at a t
 
 ### Ghidra cross-reference
 
-`CN_ReadConfig` is confirmed in FA.SMS. Load FA.EXE with `ImportFASms` labels, locate `CN_ReadConfig`, and decompile it. The function reads `EA.CFG` into a struct — the field offsets and types will be directly readable from the decompiled code, bypassing the need for differential passes for harder-to-toggle options (e.g. network-related settings stored in EA.CFG).
+Both `CN_ReadConfig` and `CN_WriteConfig` are confirmed in FA.SMS (full decorated names: `?CN_ReadConfig@@YAXPAUCN_INFO@@PAE@Z`, `?CN_WriteConfig@@YAXPAUCN_INFO@@PAE@Z`). Both take a `CN_INFO*` and a `unsigned char*` parameter. Load FA.EXE with `ImportFASms` labels, locate `CN_ReadConfig`, and decompile it. The function reads `EA.CFG` into a `CN_INFO` struct — the field offsets and types will be directly readable from the decompiled code, bypassing the need for differential passes for harder-to-toggle options (e.g. network-related settings stored in EA.CFG).
+
+`CN_WriteConfig` is the inverse — tracing it will confirm which fields are written on save vs. only read on load.
 
 ## TODO
 
 - Complete differential mapping pass for all settings categories above
-- Cross-reference with `CN_ReadConfig` in Ghidra to confirm field layout and find any non-obvious fields
+- Decompile `CN_ReadConfig` / `CN_WriteConfig` in Ghidra to confirm `CN_INFO` struct field layout and find any non-obvious fields
 
 ## Related
 

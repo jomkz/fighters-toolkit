@@ -63,10 +63,36 @@ Confirmed keywords parsed by `FUN_00481c10`:
 
 These files are stored in the LIB archive with `.mc_M` / `.mc_nato_M` suffixes, not `.MC`. They are text keyword files, not Win32 PE DLLs.
 
+## Dispatch Chain (Confirmed)
+
+The full MC dispatch chain from game entry:
+
+```
+?usnfmain@@YAXXZ (0x403700)          -- main loop
+FUN_00428412 (0x428412)              -- campaign/mission loader
+  └─ _CallMissionProc_8 (0x481940)   -- central DLL dispatcher
+       ├─ _MISSIONInit2_0 (0x480b50) -- post-load init; assigns _eventFilterProc
+       ├─ _MISSIONTextProc@16 (0x481c10)   -- re-entry: text condition parse
+       └─ _MISSIONCheckSuccess@0 (0x486860) -- re-entry: success test
+```
+
+`_MISSIONInit2_0` (0x480b50) iterates all `_objPtrs`, calls `_MAPSetSide_4`, `_OBJFindHumans_0`, `_OBJAliasAll_12`, `_OBJAliasForMulti_0`, `_TIMEInit_12`, `_G_SetScaleMax_8`, then loads the mission DLL via `_RMAccess_8(&_missionDLLName__3PADA, 0x8000)`, storing the result in `_eventFilterProc`.
+
+Confirmed condition keyword consumers:
+
+| Keyword | Consumer functions |
+|---------|-------------------|
+| `DESTROY` | `FUN_0043a5c0`, `FUN_00431ab0`, `FUN_0044fe10` |
+| `FAIL` | `FUN_004a2a41` |
+| `tmap` | `_MISSIONTextProc@16` (string at `0x4fc228`); `FUN_00495e80` (`.MC` handler at `0x495e80`, string at `0x5010f4`) |
+
+The `cond` keyword appears at 8 locations in FA.EXE but no function references were found — its parse handler and internal dispatch table in `_MISSIONTextProc` remain unmapped.
+
 ## TODO — Deep Dive
 
 - Disassemble `UKR01.MC` to trace the complete condition check logic and identify all object aliases it monitors
-- Map remaining `.mc_M` keyword handlers beyond those confirmed above
+- Map remaining `.mc_M` keyword handlers beyond those confirmed above (`cond` keyword handler not found)
+- Disassemble `FUN_00495e80` (`.MC` string handler at 0x495e80) to identify its role in the condition pipeline
 - Clarify `EXTRA01.MC` purpose (multiplayer extra, bonus mission, or other)
 
 ## Related

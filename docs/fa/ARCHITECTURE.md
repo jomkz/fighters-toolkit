@@ -29,7 +29,7 @@ All game assets are packed into `.LIB` files using the EALIB container format. S
 
 | File | Location | Contents |
 |------|----------|----------|
-| `FA_1.LIB` | Install | Fonts, icons (~1,986 PICs) |
+| `FA_1.LIB` | Install | Fonts, icons (~1,986 PICs, 15 `.FNT` overlay DLLs) |
 | `FA_2.LIB` | Install | Main assets — ~5,405 entries covering most game data |
 | `FA_3.LIB` | Disk 2 | Aircraft skins and tech sheets (822 PICs, 269 INF files) |
 | `FA_4B.LIB` | Install | Digital audio (full install only) |
@@ -156,6 +156,8 @@ FA_2.LIB contains 9 `.AI`/`.BI` pairs, one per major object category (e.g. `F.AI
 Six `.CAM` files, each a Win32 PE DLL implementing campaign logic for one theater. Each DLL embeds mission lists (e.g. `~U01.M`–`~U50.M` for the Ukraine campaign), weapon and sensor tables, aircraft type names, and campaign state strings. See [formats/CAM.md](formats/CAM.md).
 
 Exported API includes: `_AddCampaignPlane`, `_InitCampaignPilot`, `_SeqStart`, plus campaign-specific functions such as `_UkraineAddA7` and `_VietnamMedals`.
+
+**Loading mechanism:** `FUN_00428412` (0x428412) is the canonical mission/campaign loader — called from the mission-map screen handler `FUN_00422a71`. It shuts down the prior mission, selects the `.mc_M` campaign script by NATO mode, dispatches through `_CallMissionProc_8` (0x481940), runs `_MISSIONInit2_0`, and finalizes terrain dictionaries. `_CallMissionProc_8` is also called directly by the main loop `?usnfmain@@YAXXZ`, `_MISSIONCheckSuccess@0` (0x486860), and `_MISSIONTextProc@16` (0x481c10).
 
 ### Mission Definitions (.M, .MT, .MM, .MC, .SEQ)
 
@@ -292,9 +294,34 @@ The colour entry table (pointed to by header offset +0x6C) uses stride-0x30 entr
 
 ---
 
+## Runtime Entity Struct — Key Offsets
+
+The FA entity struct (one instance per live game object, base pointer stored per-object at runtime) has the following confirmed field offsets from Ghidra analysis:
+
+| Offset | Size | Role | Evidence |
+|--------|------|------|---------|
+| `+0xF0` | u32 | Target pointer / entity ID (NPC nav) | GAS init cases 0x03/0x05 |
+| `+0xF4` | u16 | Reaction parameter 1 | GAS init |
+| `+0xF6` | u16 | Reaction parameter 2 | GAS init; `_Reaction_12` (0x464040), `_MaskEvents_4` |
+| `+0xF8` | u16 | Reaction parameter 3 | GAS init |
+| `+0xFA` | u8  | Mode byte | GAS init; `_CTEval_tgt` / `_CTEval_p` |
+| `+0xFF` | — | Confirmed read by: `_Kill@0` (0x473c10), `@AmmoForClass@4` (0x474740) | `0xFF` scan |
+| `+0x100` | u8 | Primary per-frame state byte — most-polled field in flight loop | `_FMFlight@0`, `_MovePlane@0`, `_GVEventProc`, `CheckForEvents2`, and ~15 others |
+| `+0x101` | u16 | Timeout timer | GAS init |
+| `+0x10A` | — | Read by `_MaxSpeed@8` (0x477d50) | `0x10A` scan |
+| `+0x10C` | — | Campaign/init context — read by `_CampaignSave`, `_CallCampaignProc@4`, `_MISSIONLoadCommonResources@0` | `0x10C` scan |
+| `+0x114` | — | Init handle / capability field — read by `?InitCobra@@YAGPAUGlobalData@@@Z`, `?InitVideo@@YAGPAUGlobalData@@@Z` | `0x114` scan |
+| `+0x16F` | u32 | HUD state flags word (`DAT_0050cfef`) — advisory bits, damage state, ejection triggers | `FUN_00454140` |
+
+Weapon / projectile entity offsets are documented separately in [formats/JT.md](formats/JT.md) (PROJ_TYPE runtime mapping at `missile+0xA6` onward).
+
+---
+
 ## RE Resources
 
 **FA.SMS** — Binary symbol map shipping with the game. 3,829 MSVC-mangled C++ symbols with virtual addresses. Load into Ghidra or IDA to auto-name all functions. Structure: `u32` count + N × `[VA u32, strOffset u32]` + null-terminated string table (string table base at byte offset 30,636). See [formats/SMS.md](formats/SMS.md).
+
+**SYMBOLS.md** — Organized reference of all 3,829 FA.SMS symbols, grouped by subsystem with demangled names. See [SYMBOLS.md](SYMBOLS.md).
 
 **OpenFA project** (GitLab, Rust) — Primary external reference for BRF/OT/NT/PT formats and the EALIB parser.
 

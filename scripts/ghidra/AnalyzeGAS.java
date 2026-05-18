@@ -7,7 +7,7 @@ public class AnalyzeGAS extends FAScript {
     public void run() throws Exception {
         openOutput("AnalyzeGAS");
 
-        // GVProc â€” vehicle AI processor
+        // GVProc  --  vehicle AI processor
         header("_GVProc (0x473db0)");
         dumpAt(0x00473db0L);
 
@@ -123,11 +123,11 @@ public class AnalyzeGAS extends FAScript {
         header("_CTEval_do_radar_launch (0x464e60)");
         dumpAt(0x00464e60L);
 
-        // Xrefs to CTDo_move (0x465cc0) â€” find BI move dispatch
+        // Xrefs to CTDo_move (0x465cc0)  --  find BI move dispatch
         header("Xrefs to CTDo_move (0x465cc0)");
         dumpCallers(0x00465cc0L);
 
-        // JT weapon physics struct — entity offsets 0xF6-0x114 cover turn rate, g-limit,
+        // JT weapon physics struct  --  entity offsets 0xF6-0x114 cover turn rate, g-limit,
         // and flight-model parameters that have not yet been scanned.
         header("JT entity offsets 0xF6-0x114 scan in 0x460000-0x490000");
         for (long va : findFunctionsReadingOffsets(0x00460000L, 0x00490000L, 0xF6, 0x114)) dumpAt(va);
@@ -136,7 +136,7 @@ public class AnalyzeGAS extends FAScript {
         header("JT entity offsets 0xF6-0x114 wide scan 0x400000-0x510000");
         for (long va : findFunctionsReadingOffsets(0x00400000L, 0x00510000L, 0xF6, 0x114)) dumpAt(va);
 
-        // JT warhead flag bits 1-3 and 5-6 — no function found testing them in prior analysis;
+        // JT warhead flag bits 1-3 and 5-6  --  no function found testing them in prior analysis;
         // may be unused or set only at load time; scan JT setup cluster
         header("JT warhead flag bit 1 (0x2) in 0x4a6000-0x4a8000");
         for (long va : findFunctionsWithMask(0x004a6000L, 0x004a8000L, 0x2L)) dumpAt(va);

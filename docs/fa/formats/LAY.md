@@ -134,7 +134,7 @@ LAY files use **Phar Lap PE format** (signature `PL\0\0`). Unlike other small ov
 
 (CLOUD1.LAY dimensions shown. DAY1.LAY CODE vsize = 0x40C6, file offset still 0x400.)
 
-The CODE section contains all rendering data. The engine interprets this data; `_T_HorizonProc` (`0x4aace0` in FA.EXE, from FA.SMS) is the horizon renderer called by the LAY DLL.
+The CODE section contains all rendering data. The engine interprets this data; `_T_HorizonProc` (`0x4AACF0` in FA.EXE, confirmed from FA.SMS) is the horizon renderer called by the LAY DLL.
 
 ### CODE section structure (VA offsets from 0x1000)
 

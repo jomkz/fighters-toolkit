@@ -1,5 +1,5 @@
 // Bulk-imports all FA.SMS symbols into the current Ghidra program as named labels.
-// Run from: Tools → Script Manager → ImportFASms.java
+// Run from: Tools  ->  Script Manager  ->  ImportFASms.java
 //
 // The current program should be FA.EXE or an overlay DLL rebased to FA.EXE's
 // preferred base (0x00400000). See scripts/ghidra/README.md for setup and overlay DLL instructions.

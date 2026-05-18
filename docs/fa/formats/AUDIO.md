@@ -102,6 +102,49 @@ To create a `.5K` variant: pack at 11025 Hz after doubling playback speed 2×, t
 rename the extension to `.5K`. The engine plays it at half rate, yielding the correct
 pitch with reduced quality.
 
+## AIL Runtime Integration (FA.EXE)
+
+FA.EXE calls the **Miles Audio Interface Library (AIL)** API directly. The following API calls and globals were confirmed via Ghidra analysis of the FA.EXE main binary:
+
+### Initialization sequence
+
+```c
+_AIL_startup_0();
+_AIL_set_preference_8(4, 0x78);                              // MIDI preference
+_AIL_midiOutOpen_12(&_musicDriverHandle, 0, 0xFFFFFFFF);     // open MIDI driver
+_AIL_lock_0();
+_AIL_set_XMIDI_master_volume_8(...);
+_AIL_unlock_0();
+_AIL_register_timer_4(&_PollMod__YGXK_Z) → _timerHandle;    // register poll callback
+_AIL_set_timer_frequency_8(_timerHandle, 0x1e);              // 30 Hz
+_AIL_start_timer_4(_timerHandle);
+
+_AIL_set_preference_8(0xf, 0);
+_AIL_set_preference_8(0xe, 0x4000);
+_AIL_set_preference_8(0,   0x10);
+_AIL_set_preference_8(2,   0x28f);
+_AIL_waveOutOpen_16(&_soundDriverHandle, 0, 0, &fmt);        // 22050 Hz, stereo, 16-bit
+
+// Allocate mix channels (loop):
+_AIL_allocate_sample_handle_4(_soundDriverHandle) → _mixChanHandle[i]
+```
+
+### Runtime globals
+
+| Global | Type | Role |
+|--------|------|------|
+| `_musicDriverHandle__3PAU_MDI_DRIVER__A` | MDI_DRIVER* | MIDI driver handle |
+| `_soundDriverHandle__3PAU_DIG_DRIVER__A` | DIG_DRIVER* | Digital audio driver handle (22050 Hz stereo 16-bit) |
+| `_timerHandle__3JA` | HTIMER | 30 Hz poll timer for `_PollMod` |
+| `_mixChanHandle__3PAPAU_SAMPLE__A` | HSAMPLE[] | Per-channel digital audio handles |
+| `_ailActive__3DA` | bool | AIL system active flag |
+
+### Channel teardown
+
+`_AIL_end_sample_4(channel)` — called per channel on shutdown.
+
+The WAIL32.DLL and msapi.dll are the AIL wrapper DLLs loaded at runtime. Their import surface has not been traced (no Ghidra output available for the secondary project). IP.EXE audio path is also uncharted.
+
 ## Applications
 
 Use `ft audio unpack` to convert to WAV, edit, then `ft audio pack` to re-encode.

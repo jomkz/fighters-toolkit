@@ -295,6 +295,19 @@ ft gas info / unpack / pack
 
 Example: `ft pt info F16C.PT` → thrust, max_speed, fuel, stall speed, ceiling.
 
+## Confirmed Engine Functions (FA.SMS)
+
+BRF type initialisation entry points confirmed from FA.SMS (called during game startup to load each type array into memory):
+
+| VA | Symbol | BRF type loaded |
+|----|--------|-----------------|
+| `0x4A6EB0` | `SetupOT` | OBJ_TYPE (`.OT` static objects) |
+| `0x4A7040` | `SetupNT` | NPC_TYPE (`.NT` vehicles) |
+| `0x4A71C0` | `SetupPT` | PLANE_TYPE (`.PT` aircraft) |
+| `0x4A7230` | `SetupJT` | PROJ_TYPE (`.JT` weapons) |
+
+These four are the canonical entry points for tracing how BRF fields map to in-memory struct layouts (confirmed at `_SetupPT` VA from the FA.SMS cross-reference table in SMS.md).
+
 ## Applications
 
 BRF files are plain ASCII — open and edit directly after `ft unpack`, no further conversion needed.

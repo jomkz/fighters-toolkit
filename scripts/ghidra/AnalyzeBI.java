@@ -85,9 +85,9 @@ public class AnalyzeBI extends FAScript {
         header("All _CTDo_* symbols");
         dumpSymbolsMatching("ctdo_", "cteval_", "ctexec", "cttry", "ctplan");
 
-        // FRAME opcode 0x28 — writes two s16 values to DAT_00546c44 and DAT_00546c46.
+        // FRAME opcode 0x28  --  writes two s16 values to DAT_00546c44 and DAT_00546c46.
         // Every bytecode dispatch entry is prefixed with FRAME. The first s16 is a block
-        // ID (1–6 reserved, dispatch starts at 7); the second is monotonically increasing.
+        // ID (1 - 6 reserved, dispatch starts at 7); the second is monotonically increasing.
         // The consumer of these globals has not been found; scan a wide range for reads.
         header("FRAME opcode reader: xrefs to DAT_00546c44");
         dumpXrefsToData(0x00546c44L);
@@ -100,7 +100,7 @@ public class AnalyzeBI extends FAScript {
         for (long va : findFunctionsReadingOffsets(0x00460000L, 0x00490000L, 0x546c44 & 0xFF, 0x546c46 & 0xFF))
             dumpAt(va);
 
-        // Bytecode interpreter state globals — IP, priority, actor, halt
+        // Bytecode interpreter state globals  --  IP, priority, actor, halt
         header("Xrefs to BI runtime state DAT_00546bea (IP)");
         dumpXrefsToData(0x00546beaL);
 
@@ -124,6 +124,5 @@ public class AnalyzeBI extends FAScript {
                     currentProgram.getFunctionManager().getFunctionContaining(ref.getFromAddress());
             if (fn != null) dumpAt(fn.getEntryPoint().getOffset());
         }
-    }
     }
 }

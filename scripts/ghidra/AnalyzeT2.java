@@ -16,7 +16,7 @@ public class AnalyzeT2 extends FAScript {
         header("do_use_terrain_detail (0x4d2344)");
         dumpAt(0x004d2344L);
 
-        // Callers of @G_Tile@32 â€” find the terrain rendering / T2 iteration loop
+        // Callers of @G_Tile@32  --  find the terrain rendering / T2 iteration loop
         header("Callers of @G_Tile@32 (0x447aa5)");
         dumpCallers(0x00447aa5L);
 

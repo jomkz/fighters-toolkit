@@ -15,6 +15,7 @@ set GHIDRA_HOME=C:\tools\ghidra_12.1_PUBLIC
 set FA_PROJECT=%USERPROFILE%\src\fa
 set FA_INSTALL=C:\JANES\Fighters Anthology
 set SCRIPT_DIR=%~dp0
+if "%SCRIPT_DIR:~-1%"=="\" set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 
 echo ============================================================
 echo  FA.EXE Ghidra project setup

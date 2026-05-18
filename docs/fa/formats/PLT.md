@@ -79,6 +79,14 @@ Method to systematically map the unmapped 3,279-byte region:
 - **HxD** — load two saves side by side, use Compare → Differ.
 - **010 Editor** — create a template as fields are confirmed; track which bytes are decoded.
 
+## Confirmed Engine Functions (FA.SMS)
+
+| VA | Symbol | Description |
+|----|--------|-------------|
+| `0x467180` | `PilotSave(PILOT*, short)` | Write pilot save — takes a `PILOT*` and a short slot index; serialises the identity block and stats block to `PLTnnn.P` |
+
+Use `PilotSave` as the Ghidra entry point to map the full `PILOT` struct layout and confirm the stats block field offsets (`0xB0`–`0x0D7E`).
+
 ## Related
 
 - [BRF.md](BRF.md) — `.PT` (plane type) and `.JT` (ordnance) records referenced by name

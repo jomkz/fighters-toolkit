@@ -56,6 +56,17 @@ per-frame encoding has not been fully reversed.
 Audio is stored separately in the paired `.11K` file (raw PCM, 8000 Hz mono
 8-bit). It is not embedded in the `.VDO`.
 
+## Confirmed Loader Functions (FA.SMS)
+
+| Symbol | Demangled | Role |
+|--------|-----------|------|
+| `?ReadVDOHeader@@YADPAUVDO@@PAE@Z` | `char ReadVDOHeader(VDO *, unsigned char *)` | Parse the 816-byte file header into a `VDO` struct |
+| `?ReadFrameSizesFile@@...` | `ReadFrameSizesFile(...)` | Read the paired `.FBC` frame-size index file |
+| `?AllocVDO@@YADPAUVDO@@@Z` | `char AllocVDO(VDO *)` | Allocate frame decode buffers for a loaded VDO |
+| `?OpenVDOFile@@...` | `OpenVDOFile(...)` | Open the `.VDO` file and begin streaming |
+
+These four symbols are confirmed present in FA.SMS. All are member-like free functions operating on a `VDO` struct; the struct fields correspond directly to the header layout documented above.
+
 ## Observed Values
 
 | File | Frames | Width | Height | FPS | Audio Hz |

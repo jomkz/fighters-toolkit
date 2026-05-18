@@ -211,6 +211,10 @@ Engine-defined `switch` target labels (no `maneuver` string needed): `fastHigh`,
 |-----|-------|
 | FA_2.LIB | 9 |
 
+## Implementation Note — `_CTDo_*` / `_CTEval_*` in FA.EXE
+
+The `_CTDo_*` and `_CTEval_*` condition/action dispatcher functions exist in **FA.EXE itself** at VA range **0x464C80–0x467110** — not only in the companion `.BI` DLL files. This means the interpreter core is compiled into the main executable; the `.BI` DLLs supply per-object script data but delegate dispatch back to FA.EXE's built-in handlers.
+
 ## TODO — Deep Dive
 
 - Confirm `<speed_mode>` and `<value>` argument names for `move` in the AI source: the bytecode arg readers pop heading, angle, alt/roll, speed, duration — map these to the AI source syntax precisely

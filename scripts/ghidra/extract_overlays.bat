@@ -1,6 +1,8 @@
 @echo off
-:: Extracts all PE overlay DLLs from FA_2.LIB into per-format subdirectories.
-:: Output: %FA_PROJECT%\overlays\{bi,cam,mc,hud,lay,fnt,mus}\
+:: Extracts all PE overlay DLLs from FA_1.LIB and FA_2.LIB into per-format subdirs.
+::   FA_1.LIB -- FNT (bitmap fonts, 15 files)
+::   FA_2.LIB -- BI, CAM, HUD, LAY, MC, MUS (115 files)
+:: Output: %FA_PROJECT%\overlays\{BI,CAM,MC,HUD,LAY,FNT,MUS}\
 ::
 :: Requires ft.exe on PATH or set FT_EXE below.
 :: Run from the repo root or any directory; uses absolute paths throughout.
@@ -18,28 +20,41 @@ if exist "%~dp0..\..\build\cli\Release\ft.exe" (
     set FT_EXE=%~dp0..\..\build\cli\Release\ft.exe
 )
 
-set LIB=%FA_INSTALL%\FA_2.LIB
+set LIB1=%FA_INSTALL%\FA_1.LIB
+set LIB2=%FA_INSTALL%\FA_2.LIB
 set OVERLAY_ROOT=%FA_PROJECT%\overlays
 
 echo ============================================================
 echo  FA overlay DLL extraction
-echo  Source : %LIB%
-echo  Output : %OVERLAY_ROOT%
+echo  Source 1 : %LIB1%  (FNT)
+echo  Source 2 : %LIB2%  (BI CAM HUD LAY MC MUS)
+echo  Output   : %OVERLAY_ROOT%
 echo ============================================================
 echo.
 
-if not exist "%LIB%" (
-    echo ERROR: %LIB% not found.
+if not exist "%LIB1%" (
+    echo ERROR: %LIB1% not found.
+    exit /b 1
+)
+if not exist "%LIB2%" (
+    echo ERROR: %LIB2% not found.
     exit /b 1
 )
 
-:: Unpack everything into a staging directory
+:: Unpack both archives into a shared staging directory
 set STAGING=%OVERLAY_ROOT%\_all
-echo [1/3] Unpacking FA_2.LIB to staging dir...
+echo [1/3] Unpacking FA_1.LIB to staging dir...
 if not exist "%STAGING%" mkdir "%STAGING%"
-"%FT_EXE%" lib unpack "%LIB%" "%STAGING%"
+"%FT_EXE%" lib unpack "%LIB1%" "%STAGING%"
 if errorlevel 1 (
-    echo ERROR: ft lib unpack failed.
+    echo ERROR: ft lib unpack FA_1.LIB failed.
+    exit /b 1
+)
+
+echo [1b/3] Unpacking FA_2.LIB to staging dir...
+"%FT_EXE%" lib unpack "%LIB2%" "%STAGING%"
+if errorlevel 1 (
+    echo ERROR: ft lib unpack FA_2.LIB failed.
     exit /b 1
 )
 
@@ -70,6 +85,7 @@ for %%F in (IP.EXE WAIL32.DLL msapi.dll CDRVDL32.DLL CDRVHF32.DLL CDRVXF32.DLL C
 echo.
 echo ============================================================
 echo  Extraction complete.
+echo  Sources:      FA_1.LIB (FNT x15) + FA_2.LIB (BI/CAM/HUD/LAY/MC/MUS x115)
 echo  Overlay dirs: %OVERLAY_ROOT%\{BI,CAM,MC,HUD,LAY,FNT,MUS}
 echo  Secondary:    %OVERLAY_ROOT%\secondary
 echo  Next:         scripts\ghidra\import_overlays.bat

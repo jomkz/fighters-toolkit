@@ -5,7 +5,7 @@
 //   2. A range scan around do_use_terrain_detail (0x4d2344)
 //   3. A range scan around tileExpand (0x4f4f78) and expandTerrain (0x50e145)
 //   4. An offset scan for T2 sub-header constants
-//   5. A surface-class constant scan looking for byte→PIC atlas mapping
+//   5. A surface-class constant scan looking for byte -> PIC atlas mapping
 //
 // @category FightersAnthology
 // @author fighters-toolkit
@@ -38,7 +38,7 @@ public class AnalyzeT2DLL extends FAScript {
         header("Callers of expandTerrain");
         dumpCallers(0x0050e145L);
 
-        // T2 DLL loader area — likely near the terrain/tile subsystem
+        // T2 DLL loader area  --  likely near the terrain/tile subsystem
         header("T2 DLL load area 0x4d2000-0x4d5000");
         dumpRange(0x004d2000L, 0x004d5000L);
 
@@ -56,7 +56,7 @@ public class AnalyzeT2DLL extends FAScript {
         header("T2 sub-header constant 0xC3 (195) scan");
         for (long va : findFunctionsWithMask(0x004d0000L, 0x00510000L, 0xC3L)) dumpAt(va);
 
-        // Surface-class constants — byte values 0x00-0x1F are typical tile class IDs
+        // Surface-class constants  --  byte values 0x00-0x1F are typical tile class IDs
         // Search for functions reading byte offsets in that range that also touch PIC loaders
         header("Surface-class offset scan (byte 0x00-0x20) in T2 area");
         for (long va : findFunctionsReadingOffsets(0x004d0000L, 0x00510000L, 0, 0x20)) dumpAt(va);
@@ -66,14 +66,14 @@ public class AnalyzeT2DLL extends FAScript {
         searchStrings(new String[]{"BIT2", ".T2", ".t2", "tmap", "tdic",
                 "terrain", "TERRAIN", "surface", "tiletype", "tileclass"});
 
-        // GetGround — ground elevation query, uses T2 data
+        // GetGround  --  ground elevation query, uses T2 data
         header("_GetGround@0 (0x47af70)");
         dumpAt(0x0047af70L);
 
         header("Callers of _GetGround@0");
         dumpCallers(0x0047af70L);
 
-        // MAPWorldToScreen — coordinate transform, references T2 tile grid
+        // MAPWorldToScreen  --  coordinate transform, references T2 tile grid
         header("?MAPWorldToScreen (0x422380)");
         dumpAt(0x00422380L);
 
