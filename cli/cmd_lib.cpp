@@ -66,6 +66,56 @@ static int cmd_ls(int argc, char** argv) {
     return 0;
 }
 
+// lib extract <file.LIB> <NAME> [NAME ...] [-o output_dir]
+static int cmd_extract(int argc, char** argv) {
+    if (argc < 3) {
+        fprintf(stderr, "Usage: ft lib extract <file.LIB> <NAME> [NAME ...] [-o dir]\n");
+        return 1;
+    }
+    auto lib = read_file(argv[1]);
+    if (lib.empty()) { fprintf(stderr, "Cannot read: %s\n", argv[1]); return 1; }
+
+    const char* out_path = ".";
+    std::vector<const char*> names;
+    for (int i = 2; i < argc; ++i) {
+        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) { out_path = argv[++i]; }
+        else names.push_back(argv[i]);
+    }
+    if (names.empty()) { fprintf(stderr, "No file names specified\n"); return 1; }
+
+    fs::create_directories(out_path);
+    auto entries = ealib_read_dir(lib.data(), lib.size());
+    if (entries.empty()) { fprintf(stderr, "Not a valid EALIB: %s\n", argv[1]); return 1; }
+
+    int ok = 0, fail = 0;
+    for (const char* name : names) {
+        auto it = std::find_if(entries.begin(), entries.end(), [&](const Entry& e) {
+            return _stricmp(e.name, name) == 0;
+        });
+        if (it == entries.end()) {
+            fprintf(stderr, "  NOT FOUND: %s\n", name);
+            fail++;
+            continue;
+        }
+        auto data = ealib_extract(lib.data(), lib.size(), *it, true);
+        if (data.empty() && it->size > 0) {
+            fprintf(stderr, "  SKIP %s (flags=%d, unsupported)\n", it->name, it->flags);
+            fail++;
+            continue;
+        }
+        fs::path dest = fs::path(out_path) / sanitize_filename(it->name);
+        if (write_file(dest.string().c_str(), data)) {
+            printf("  %s -> %s (%zu bytes)\n", it->name, dest.string().c_str(), data.size());
+            ok++;
+        } else {
+            fprintf(stderr, "  FAIL %s: write error\n", it->name);
+            fail++;
+        }
+    }
+    printf("\n%d extracted, %d failed\n", ok, fail);
+    return fail ? 1 : 0;
+}
+
 // lib unpack <file.LIB> [output_dir]
 static int cmd_unpack(int argc, char** argv) {
     if (argc < 2) { fprintf(stderr, "Usage: ft lib unpack <file.LIB> [output_dir]\n"); return 1; }
@@ -142,14 +192,15 @@ static int cmd_patch(int argc, char** argv) {
 
 int cmd_lib(int argc, char** argv) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: ft lib <ls|unpack|pack|patch> ...\n");
+        fprintf(stderr, "Usage: ft lib <ls|unpack|extract|pack|patch> ...\n");
         return 1;
     }
     const char* sub = argv[1];
-    if (strcmp(sub, "ls")     == 0) return cmd_ls(argc - 1, argv + 1);
-    if (strcmp(sub, "unpack") == 0) return cmd_unpack(argc - 1, argv + 1);
-    if (strcmp(sub, "pack")   == 0) return cmd_pack(argc - 1, argv + 1);
-    if (strcmp(sub, "patch")  == 0) return cmd_patch(argc - 1, argv + 1);
+    if (strcmp(sub, "ls")      == 0) return cmd_ls(argc - 1, argv + 1);
+    if (strcmp(sub, "unpack")  == 0) return cmd_unpack(argc - 1, argv + 1);
+    if (strcmp(sub, "extract") == 0) return cmd_extract(argc - 1, argv + 1);
+    if (strcmp(sub, "pack")    == 0) return cmd_pack(argc - 1, argv + 1);
+    if (strcmp(sub, "patch")   == 0) return cmd_patch(argc - 1, argv + 1);
     fprintf(stderr, "Unknown lib subcommand: %s\n", sub);
     return 1;
 }

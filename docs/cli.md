@@ -5,7 +5,7 @@ All commands follow the pattern `ft <subsystem> <subcommand> [args]`.
 ## Quick Reference
 
 ```
-ft lib     ls / unpack / pack / patch   # .LIB archive management
+ft lib     ls / unpack / extract / pack / patch   # .LIB archive management
 ft pic     info / unpack / pack         # .PIC images (dense, sparse, JPEG)
 ft seq     dump / unpack / pack         # .SEQ cutscene timelines
 ft audio   info / unpack / pack         # .11K / .5K / .8K raw PCM audio
@@ -22,10 +22,11 @@ ft plt     info                         # .P pilot save file
 ## lib — Archive
 
 ```
-ft lib ls     <file.LIB>
-ft lib unpack <file.LIB> [output_dir]
-ft lib pack   <dir>      <output.LIB>
-ft lib patch  <src.LIB>  <name> <file> <output.LIB>
+ft lib ls      <file.LIB>
+ft lib unpack  <file.LIB> [output_dir]
+ft lib extract <file.LIB> <NAME> [NAME ...] [-o output_dir]
+ft lib pack    <dir>      <output.LIB>
+ft lib patch   <src.LIB>  <name> <file> <output.LIB>
 ```
 
 #### `ft lib ls <file.LIB>`
@@ -56,6 +57,16 @@ ft lib unpack FA_3.LIB          # extracts to .\FA_3\
 
 Audio files whose names begin with `&` in the archive extract as `_` (e.g. `&AFTB2.11K` →
 `_AFTB2.11K`) because Windows rejects `&` in filenames.
+
+#### `ft lib extract <file.LIB> <NAME> [NAME ...] [-o output_dir]`
+
+Extract one or more named entries. Output defaults to the current directory;
+use `-o` to redirect. Name matching is case-insensitive.
+
+```powershell
+ft lib extract FA_2.LIB BALTIC.TXT
+ft lib extract FA_2.LIB F16C_0.PIC F15C_0.PIC -o pics\
+```
 
 #### `ft lib pack <dir> <output.LIB>`
 
