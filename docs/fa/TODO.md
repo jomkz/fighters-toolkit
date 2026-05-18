@@ -6,9 +6,9 @@ Outstanding RE and documentation tasks, grouped by effort.
 
 ## Binary Analysis (no disassembly tool required)
 
-- **PLT field gap (0xB0–campaign block start)**: Field layout from offset `0xB0` to the campaign block start is unmapped. Method: diff two pilot saves with known differences (aircraft, loadout) byte-by-byte. See [formats/PLT.md](formats/PLT.md). *(Requires gameplay — 4-pass methodology documented in PLT.md)*
+- **PLT field gap (0xB0–campaign block start)**: Field layout from offset `0xB0` to the campaign block start is unmapped. `PilotSave(PILOT*, short)` confirmed at 0x467180 — decompile in Ghidra (with FA.SMS labels applied) to map the full `PILOT` struct and confirm all field offsets directly. Alternatively: diff two pilot saves with known differences (aircraft, loadout) byte-by-byte. See [formats/PLT.md](formats/PLT.md). *(Requires gameplay — 4-pass methodology documented in PLT.md)*
 
-- **T2 sub-header class constants and surface class**: Bytes 4–16 are class constants (3 distinct values by grid size — confirmed). `DumpT2Loader.java` ran: **BIT2 magic not in FA.EXE** — T2 binary loading is in an overlay DLL. FA.SMS has no T2-related symbols. MM text parser confirmed as `FUN_00481c10`: `tmap` (4 × s16, max 3500), `tmap_named` (name + 2 × s16, 53-byte struct), `tdic` (u32 + 32 × u8, max 300). Sub-header constant 0x95 found in `FUN_0043faf0`, `FUN_004672c0`, `FUN_0046eedf`, `FUN_00480230` — not yet analyzed. Surface class byte → PIC atlas mapping and tile-summary record 0 algorithm also unresolved. See [formats/T2.md](formats/T2.md).
+- **T2 sub-header class constants and surface class**: Bytes 4–16 are class constants (3 distinct values by grid size — confirmed). `DumpT2Loader.java` ran: **BIT2 magic not in FA.EXE** — T2 binary loading is in an overlay DLL. FA.SMS has no T2-related symbols. MM text parser confirmed as `_MISSIONTextProc@16` = `FUN_00481c10`: `tmap` (4 × s16, max 3500), `tmap_named` (name + 2 × s16, 53-byte struct), `tdic` (u32 + 32 × u8, max 300). T2 loader entry point confirmed: `@T_Load@4` = 0x4C5D70. Tile remap handler `FUN_004d3064` writes result to `DAT_00515f94 + tile_id + 3`. `do_use_terrain_detail` (0x4d2344) and `expandTerrain` (0x50e145) did NOT resolve in Ghidra. Sub-header constant 0x95 found in `FUN_0043faf0`, `FUN_004672c0`, `FUN_0046eedf`, `FUN_00480230` — not yet analyzed. Surface class byte → PIC atlas mapping and tile-summary record 0 algorithm also unresolved. See [formats/T2.md](formats/T2.md).
 
 ---
 
@@ -20,7 +20,7 @@ For each item: load the overlay DLL in Ghidra, import the FA.SMS symbol list via
 
 - **HGR hangar layout**: Two files confirmed: `H_AIRB.HGR` (land base) and `H_AIRB2.HGR` (carrier / alternate airbase). Loading mechanism confirmed (`FUN_004543c0`): slot entries at offset +0x2D, 30 × 8-byte entries, X/Y coordinate arrays built at load. Remaining: decode the 8-byte slot entry structure and `FUN_004a6cc0` sub-resource. See [formats/HGR.md](formats/HGR.md).
 
-- **OT/NT `ot_flags` bit semantics**: Bits 5, 8, 11, 15, 22 confirmed via Ghidra; bits 17, 20, 21 confirmed by BRF survey. Still inferred only: bit 10 (OT — civilian/dual-use infrastructure) and NT bits 18, 19, 20, 25, 26 — no entity+0x09 bit-test found in captured functions. See [formats/OT.md](formats/OT.md) and [formats/NT.md](formats/NT.md).
+- **OT/NT `ot_flags` bit semantics**: Bits 5, 8, 11, 15, 22 confirmed via Ghidra; bits 17, 20, 21 confirmed by BRF survey. **Bit 10 confirmed resolved**: `_Reaction_12` (0x464040) and `_MaskEvents_4` (0x463ea0) drive entity+0x09 & 0x400; also toggles bay-door actuator. NT bits 18–20 / 25–26: still no dedicated test functions found — tested inline only; labels remain inferred. See [formats/OT.md](formats/OT.md) and [formats/NT.md](formats/NT.md).
 
 ---
 
@@ -40,15 +40,17 @@ These formats (AI scripts, campaign state, mission conditions, theater maps) int
 
 ## Format Deep Dives (BRF Numeric Fields)
 
-- **JT physics gap bytes**: PROJ_TYPE+0x50–0x54 and +0x56–0x6E (30 bytes total) unresolved — likely turn rate, g-limit, and other flight-model parameters. Prior `DumpPROJPhysics3` scanned for PROJ_TYPE offsets 0x50–0x7F but found nothing; the entity-relative equivalents (entity+0xF6–0x114) were NOT scanned. New `DumpPROJDispatch.java` scans the full binary for entity offsets 0xF6–0x114 and dumps the complete 0x4C0000–0x4C3000 PROJ range (pending run). See [formats/JT.md](formats/JT.md).
+- **JT physics gap bytes**: PROJ_TYPE+0x50–0x54 and +0x56–0x6E (30 bytes total) unresolved — likely turn rate, g-limit, and other flight-model parameters. Prior `DumpPROJPhysics3` scanned for PROJ_TYPE offsets 0x50–0x7F but found nothing; the entity-relative equivalents (entity+0xF6–0x114) were NOT scanned. New `DumpPROJDispatch.java` scans the full binary for entity offsets 0xF6–0x114 and dumps the complete 0x4C0000–0x4C3000 PROJ range (pending run). **JT entity offsets 0xF0–0x114 now confirmed**: +0xF0 target ptr/ID, +0xF4/F6/F8 reaction params, +0xFA mode byte, +0x100 primary per-frame state byte (most-polled), +0x101 timeout timer, +0x10C campaign context, +0x114 init handle, +0x16F HUD state flags. See [formats/JT.md](formats/JT.md).
 
 - **JT warhead flags bits 1–3, 5–6**: All other warhead flag bits confirmed. Bits 1–3 and 5–6 have no function found testing them from `missile+0xa6`; may be structural/unused flags. See [formats/JT.md](formats/JT.md).
+
+- **Entity runtime flags bits 17 and 21**: Bit 17 (`0x20000`) is toggled as `_gamePrefs` bit at menu option 0x606; also at `DAT_0050ce81` — acts as "low fuel" trigger when bit 21 is clear. Bit 21 (`0x200000`) toggles at menu option 0x616; inhibit flag for "running on fumes" voice line + 0x380000 state. These are runtime entity flags (not `ot_flags`); their full semantic scope across all entity types needs confirmation.
 
 ---
 
 ## Undocumented Loose Files
 
-- **EA.CFG**: Map all fields by toggling settings in-game and diffing. Cross-reference `CN_ReadConfig` symbol in FA.SMS. See [formats/CFG.md](formats/CFG.md).
+- **EA.CFG**: Map all fields by toggling settings in-game and diffing. `CN_ReadConfig` and `CN_WriteConfig` are confirmed in FA.SMS (full signatures: `void CN_ReadConfig(CN_INFO*, unsigned char*)` / `void CN_WriteConfig(CN_INFO*, unsigned char*)`). Decompile both to map the `CN_INFO` struct. See [formats/CFG.md](formats/CFG.md).
 
 - **NET.DAT**: Map multiplayer network config fields. Cross-reference `CN_INFO` struct via FA.SMS. Confirm whether NET.DAT holds one transport block or a union of all transport configs. See [formats/NET.md](formats/NET.md).
 

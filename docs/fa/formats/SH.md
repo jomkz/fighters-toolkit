@@ -300,6 +300,14 @@ if needed for rendering.
   geometry from the main sequential stream is emitted into a single OBJ.
 - OBJ -> SH is not implemented (inverse is too complex given animation/LOD/damage states).
 
+## Confirmed Engine Opcode Handlers (FA.EXE)
+
+Shape opcodes that branch on entity state are handled by FA.EXE functions. Confirmed from FA.SMS:
+
+| VA | Symbol | Description |
+|----|--------|-------------|
+| `0x4D22D4` | `do_ifdestroyed` | Tests whether the entity is in destroyed state; skips or follows a conditional branch in the shape bytecode stream |
+
 ## .PTS Extension
 
 Community mod archives sometimes distribute aircraft shadow/crash shapes as `.PTS` files

@@ -33,7 +33,7 @@ public class AnalyzeECM extends FAScript {
         header("FUN_00452980");
         dumpAt(0x00452980L);
 
-        // ECM power flags â€” bit tests 0x20/0x40/0x80/0xe0
+        // ECM power flags  --  bit tests 0x20/0x40/0x80/0xe0
         header("Bit test 0x20 in 0x452000-0x454000");
         for (long va : findFunctionsWithMask(0x00452000L, 0x00454000L, 0x20L)) dumpAt(va);
 

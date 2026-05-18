@@ -16,7 +16,7 @@ public class AnalyzeHUD extends FAScript {
         dumpAt(0x00406040L);
 
         header("HUDDrawHVel");
-        dumpAt(0x00408060L);  // approximate â€” range scan will catch it
+        dumpAt(0x00408060L);  // approximate  --  range scan will catch it
 
         header("HUDDrawDisrupt (0x40abb0)");
         dumpAt(0x0040abb0L);
@@ -45,11 +45,11 @@ public class AnalyzeHUD extends FAScript {
         header("All writers to DAT_0050cfef (HUD status bitmask)");
         dumpXrefsToData(0x0050cfefL, true);
 
-        // _PLANECheckFuel@0 â€” bit 14/15-18 source
+        // _PLANECheckFuel@0  --  bit 14/15-18 source
         header("_PLANECheckFuel@0 (0x49fb70)");
         dumpAt(0x0049fb70L);
 
-        // Callers of _HARDPtrs@12 (0x452770) â€” reads hardpoint fuel state
+        // Callers of _HARDPtrs@12 (0x452770)  --  reads hardpoint fuel state
         header("Callers of _HARDPtrs@12 (0x452770)");
         dumpCallers(0x00452770L);
 
@@ -57,7 +57,7 @@ public class AnalyzeHUD extends FAScript {
         header("Callers of FUN_00452140");
         dumpCallers(0x00452140L);
 
-        // 0x4000 constant scan â€” bit 14 setter
+        // 0x4000 constant scan  --  bit 14 setter
         header("Functions using constant 0x4000 (bit 14) in 0x400000-0x500000");
         for (long va : findFunctionsWithMask(0x00400000L, 0x00500000L, 0x4000L)) dumpAt(va);
 
@@ -79,9 +79,32 @@ public class AnalyzeHUD extends FAScript {
         header("PROJMoveProc (0x4c11b0)");
         dumpAt(0x004c11b0L);
 
+        // Bit 14 SP writer  --  two functions at 0x4bc177 and 0x4bc190 are the unresolved
+        // single-player path that writes bit 14 of DAT_0050cfef. These are read during
+        // ejection states 0x11 and 0x12. Force-create since they may not be auto-named.
+        header("Bit 14 SP writer FUN_004bc177 (ejection state 0x11/0x12)");
+        dumpAtForced(0x004bc177L);
+
+        header("Bit 14 SP writer FUN_004bc190");
+        dumpAtForced(0x004bc190L);
+
+        header("Callers of FUN_004bc177");
+        dumpCallers(0x004bc177L);
+
+        header("Callers of FUN_004bc190");
+        dumpCallers(0x004bc190L);
+
+        // Ejection state machine  --  bits 0x11 and 0x12 select eject phase
+        header("Ejection state scan: constant 0x11 in 0x4b8000-0x4c0000");
+        for (long va : findFunctionsWithMask(0x004b8000L, 0x004c0000L, 0x11L)) dumpAt(va);
+
+        header("Ejection state scan: constant 0x12 in 0x4b8000-0x4c0000");
+        for (long va : findFunctionsWithMask(0x004b8000L, 0x004c0000L, 0x12L)) dumpAt(va);
+
         // Symbol search
-        header("Symbols matching hud/gauge/warning/indicator/display");
-        dumpSymbolsMatching("hud", "gauge", "warning", "indicator", "display", "cockpit");
+        header("Symbols matching hud/gauge/warning/indicator/display/eject");
+        dumpSymbolsMatching("hud", "gauge", "warning", "indicator", "display",
+                "cockpit", "eject", "pilot", "escape", "canopy");
 
         closeOutput();
     }

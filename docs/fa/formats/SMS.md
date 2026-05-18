@@ -83,6 +83,33 @@ Spot-checked 10 symbols across the full VA range against the shipped `FA.EXE` (I
 - `__chkstk` and `__crtheap` are present but both appear in release builds (stack probing for large frames; CRT heap pointer)
 - Mangled names show no debug-specific decorations
 
+## Key Confirmed Symbols
+
+A curated list of all 3,829 named symbols is maintained in [docs/fa/SYMBOLS.md](../SYMBOLS.md). Selected high-value symbols confirmed during the main Ghidra disassembly pass:
+
+| VA | Symbol | Notes |
+|----|--------|-------|
+| `0x403700` | `?usnfmain@@YAXXZ` | Main game loop entry point |
+| `0x41E8F0` | `IsBrentDLL` | Test whether a loaded DLL uses Phar Lap BRF format |
+| `0x41EB60` | `LoadDLL` | Generic overlay DLL loader |
+| `0x41F240` | `LoadBrentDLL` | Load a Phar Lap BRF overlay DLL |
+| `0x441C60` | `_ChooseScoreInit` | Score / debrief screen initialiser |
+| `0x464C80` | `_CTDo_*` range start | AI condition/action dispatcher — in FA.EXE itself (see AI.md) |
+| `0x463EA0` | `_MaskEvents_4` | Entity flag bit 10 event-mask handler |
+| `0x464040` | `_Reaction_12` | Entity flag bit 10 reaction handler |
+| `0x467110` | `_CTEval_*` range end | AI condition evaluator — in FA.EXE itself |
+| `0x467180` | `PilotSave(PILOT*, short)` | Write pilot data to `PLTnnn.P` save file |
+| `0x480B50` | `_MISSIONInit2_0` | Mission system second-phase init |
+| `0x481940` | `_CallMissionProc_8` | Dispatch per-mission condition proc |
+| `0x481C10` | `_MISSIONTextProc@16` | MM text parser (tmap / tmap_named / tdic keywords) |
+| `0x486860` | `_MISSIONCheckSuccess@0` | Check win/loss conditions |
+| `0x4A6EB0` | `SetupOT` | OBJ_TYPE init (BRF type init entry) |
+| `0x4A7230` | `SetupJT` | PROJ_TYPE init |
+| `0x4AACF0` | `T_HorizonProc` | Horizon renderer — exported by FA.EXE, consumed by .LAY DLLs |
+| `0x4B4320` | `WRFogLayerUpdate` | Per-frame fog opacity jitter — confirmed FA.EXE export |
+| `0x4C5D70` | `@T_Load@4` | T2 terrain file loader entry point |
+| `0x4D22D4` | `do_ifdestroyed` | Shape bytecode opcode handler — tests destroyed state |
+
 ## Usage with Ghidra
 
 A ready-to-run Java script is provided at [`scripts/ghidra/ImportFASms.java`](../../scripts/ghidra/ImportFASms.java). See [`scripts/README.md`](../../scripts/README.md) for full setup and overlay-DLL rebasing instructions.

@@ -211,6 +211,23 @@ The PROJ_TYPE section base is at `missile+0xa6` in the runtime entity. Confirmed
 
 The remaining gap PROJ_TYPE+0x50–0x54 and +0x56–0x6E (30 bytes) was not read by any function in the surveyed range. Symbol `_PROJProc` was not found in the Ghidra symbol table — the physics update callback may use a different name or be called through a virtual dispatch table.
 
+### Confirmed entity offsets 0xF0–0x16F (from DumpPROJDispatch run)
+
+The entity-relative offsets around the PROJ_TYPE base (`missile+0xa6`) were confirmed by scanning entity+0xF0–0x114:
+
+| Runtime offset | Role (confirmed) |
+|----------------|-----------------|
+| `entity+0xF0` | Target ptr / target ID |
+| `entity+0xF4` | Reaction param 0 |
+| `entity+0xF6` | Reaction param 1 |
+| `entity+0xF8` | Reaction param 2 |
+| `entity+0xFA` | Mode byte |
+| `entity+0x100` | **Primary per-frame state byte** — most-polled field in the entity update loop |
+| `entity+0x101` | Timeout / tick timer |
+| `entity+0x10C` | Campaign context reference |
+| `entity+0x114` | Init handle |
+| `entity+0x16F` | HUD state flags (also `DAT_0050cfef` = player entity + 0x16F per HUD.md) |
+
 ## TODO
 
 - Confirm bits 1–3, 5–6 of warhead flags lower byte — survey of 0x4b–0x4d code range found no function testing these bits directly from `missile+0xa6`; they may gate combined capability checks not dispatched individually
