@@ -55,14 +55,14 @@ The `01 02 03 02 01 02 03 02 01` byte pattern immediately following `FC` is a **
 | File | Playlist ID | Track indices | Notes |
 |------|-------------|--------------|-------|
 | `M_AIR.MUS` | `"air"` | 4 6 107 108 109 18 110 116 117 118 119 24 **29** 21 121 122 123 125 126 127 \| 9 38 62 65 67 19 | 26 tracks in two groups split by `FE` conditional; index 29 has no file in FA_2.LIB |
-| `M_NORMAL.MUS` | `"normal"` | 14 70 71 72 73 74 47 61 40 75 76 77 78 44 4 39 22 28 48 40 80 81 82 83 84 26 19 43 85 86 87 88 89 46 13 23 90 91 92 94 7 9 31 38 44 | 45 tracks; longest playlist |
-| `M_DANGER.MUS` | `"danger"` | 100 101 13 48 47 61 28 39 46 43 **41** 26 102 5 18 4 45 104 19 23 21 6 | 22 tracks; index 41 has no file in FA_2.LIB |
+| `M_NORMAL.MUS` | `"air"` | 14 70 71 72 73 74 47 61 40 75 76 77 78 44 4 39 22 28 48 40 80 81 82 83 84 26 19 43 85 86 87 88 89 46 13 23 90 91 92 94 7 9 31 38 44 | 45 tracks; longest playlist |
+| `M_DANGER.MUS` | `"air"` | 100 101 13 48 47 61 28 39 46 43 **41** 26 102 5 18 4 45 104 19 23 21 6 | 22 tracks; index 41 has no file in FA_2.LIB |
 | `M_VALK.MUS` | `"valk"` | 1 | 1 track → VALK01.XMI; valkyrie/dogfight state |
-| `M_DECK.MUS` | `"deck"` | 14 13 43 | 3 tracks; carrier deck state |
-| `M_HOME.MUS` | `"home"` | 25 26 40 | 3 tracks; return-to-base |
-| `M_LAUNCH.MUS` | `"launch"` | 7 9 44 31 38 44 | 6 tracks (44 repeated); uses 3-byte `FB` form |
+| `M_DECK.MUS` | `"air"` | 14 13 43 | 3 tracks; carrier deck state |
+| `M_HOME.MUS` | `"air"` | 25 26 40 | 3 tracks; return-to-base |
+| `M_LAUNCH.MUS` | `"air"` | 7 9 44 31 38 44 | 6 tracks (44 repeated); uses 3-byte `FB` form |
 | `M_EJECT.MUS` | `"air"` | *(none)* | No `FB` opcodes; contains only `FD`/`FE` control flow — eject event redirects state rather than starting a new track |
-| `M_SUCC.MUS` | `"succ"` | *(none)* | No `FB` opcodes; mission-success event is state control only |
+| `M_SUCC.MUS` | `"air"` | *(none)* | No `FB` opcodes; mission-success event is state control only |
 
 ### M_AIR.MUS decoded (detailed)
 

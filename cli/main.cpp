@@ -16,6 +16,12 @@ int cmd_raw(int argc, char** argv);
 int cmd_sms(int argc, char** argv);
 int cmd_t2(int argc, char** argv);
 int cmd_plt(int argc, char** argv);
+int cmd_pal(int argc, char** argv);
+int cmd_inf(int argc, char** argv);
+int cmd_hud(int argc, char** argv);
+int cmd_lay(int argc, char** argv);
+int cmd_fnt(int argc, char** argv);
+int cmd_mus(int argc, char** argv);
 
 static void print_usage() {
     puts("ft -- Fighters Toolkit\n");
@@ -72,6 +78,27 @@ static void print_usage() {
     puts("");
     puts("Terrain map commands:");
     puts("  ft t2  info   <file.T2>");
+    puts("");
+    puts("Palette commands:");
+    puts("  ft pal info   <file.PAL>");
+    puts("  ft pal dump   <file.PAL> [-o out.png]");
+    puts("");
+    puts("Aircraft tech sheet commands:");
+    puts("  ft inf dump   <file.INF>");
+    puts("");
+    puts("HUD layout commands:");
+    puts("  ft hud dump   <file.HUD>");
+    puts("");
+    puts("Sky/atmosphere layer commands:");
+    puts("  ft lay dump     <file.LAY>");
+    puts("  ft lay gradient <file.LAY> [-o output.png]");
+    puts("");
+    puts("Font commands:");
+    puts("  ft fnt info   <file.FNT>");
+    puts("  ft fnt unpack <file.FNT> [-o output_dir]");
+    puts("");
+    puts("Music playlist commands:");
+    puts("  ft mus dump   <file.MUS>");
 }
 
 int main(int argc, char** argv) {
@@ -101,6 +128,18 @@ int main(int argc, char** argv) {
         return cmd_t2(argc - 1, argv + 1);
     if (strcmp(cmd, "plt") == 0)
         return cmd_plt(argc - 1, argv + 1);
+    if (strcmp(cmd, "pal") == 0)
+        return cmd_pal(argc - 1, argv + 1);
+    if (strcmp(cmd, "inf") == 0)
+        return cmd_inf(argc - 1, argv + 1);
+    if (strcmp(cmd, "hud") == 0)
+        return cmd_hud(argc - 1, argv + 1);
+    if (strcmp(cmd, "lay") == 0)
+        return cmd_lay(argc - 1, argv + 1);
+    if (strcmp(cmd, "fnt") == 0)
+        return cmd_fnt(argc - 1, argv + 1);
+    if (strcmp(cmd, "mus") == 0)
+        return cmd_mus(argc - 1, argv + 1);
     if (strcmp(cmd, "ot")  == 0 || strcmp(cmd, "nt")  == 0 ||
         strcmp(cmd, "pt")  == 0 || strcmp(cmd, "jt")  == 0 ||
         strcmp(cmd, "see") == 0 || strcmp(cmd, "ecm") == 0 ||
