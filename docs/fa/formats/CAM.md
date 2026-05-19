@@ -149,6 +149,21 @@ The `.idata` section of each CAM DLL lists the FA.EXE functions it calls back in
 
 UKRAINE.CAM, VIETNAM.CAM, etc. import analogous `_Ukraine*` / `_Vietnam*` functions from FA.EXE.
 
+## Loading Mechanism
+
+`FUN_00428412` (0x428412) is the canonical FA.EXE campaign/mission loader. Called from the mission-map screen handler `FUN_00422a71` (when `_curScreen == 3`) and from `FUN_0042a71a`.
+
+Execution sequence:
+1. `_MISSIONShutdown_0()` — teardown prior mission
+2. `_MISSIONInit1_0()` — engine pre-init
+3. Select `.mc_M` file: `s__mc_nato_M_004f0ca8` or `s__mc_M_004f0ca0` based on `_natoFighters` flag
+4. `_CallMissionProc_8(pcVar2, 0)` — load the campaign DLL
+5. Copy mission name string; call `_CallMissionProc_8(&_missionName, 0)` for named missions
+6. `_MISSIONInit2_0()` — post-DLL init; zeros six globals; calls `FUN_00422828`, `FUN_004242a0(0)`, `FUN_00428340`
+7. `_T_NamedTmaps_0()` / `_T_InitDictionary_0()` — terrain dictionary initialization
+
+`_CallMissionProc_8` (0x481940) is the central mission-DLL dispatcher. Its callers: `FUN_00428412`, `_ChooseScoreInit` (0x441c60), `_MISSIONTextProc@16` (0x481c10), `_MISSIONCheckSuccess@0` (0x486860), and `?usnfmain@@YAXXZ` (0x403700 — main loop).
+
 ## TODO — Deep Dive
 
 - ~~Disassemble UKRAINE.CAM to confirm the binary layout~~ **RESOLVED (2026-05-18):** KURILE.CAM analyzed via `AnalyzeCAMDLL.java`. Dispatch at PE offset 0x1000, command protocol mapped, import table extracted. See `%FA_PROJECT%/output/AnalyzeCAMDLL.txt`.

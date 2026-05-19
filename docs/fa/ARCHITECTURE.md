@@ -408,6 +408,29 @@ Weapon / projectile entity offsets are documented separately in [formats/JT.md](
 
 ---
 
+## Runtime Entity Struct — Key Offsets
+
+The FA entity struct (one instance per live game object, base pointer stored per-object at runtime) has the following confirmed field offsets from Ghidra analysis:
+
+| Offset | Size | Role | Evidence |
+|--------|------|------|---------|
+| `+0xF0` | u32 | Target pointer / entity ID (NPC nav) | GAS init cases 0x03/0x05 |
+| `+0xF4` | u16 | Reaction parameter 1 | GAS init |
+| `+0xF6` | u16 | Reaction parameter 2 | GAS init; `_Reaction_12` (0x464040), `_MaskEvents_4` |
+| `+0xF8` | u16 | Reaction parameter 3 | GAS init |
+| `+0xFA` | u8  | Mode byte | GAS init; `_CTEval_tgt` / `_CTEval_p` |
+| `+0xFF` | — | Confirmed read by: `_Kill@0` (0x473c10), `@AmmoForClass@4` (0x474740) | `0xFF` scan |
+| `+0x100` | u8 | Primary per-frame state byte — most-polled field in flight loop | `_FMFlight@0`, `_MovePlane@0`, `_GVEventProc`, `CheckForEvents2`, and ~15 others |
+| `+0x101` | u16 | Timeout timer | GAS init |
+| `+0x10A` | — | Read by `_MaxSpeed@8` (0x477d50) | `0x10A` scan |
+| `+0x10C` | — | Campaign/init context — read by `_CampaignSave`, `_CallCampaignProc@4`, `_MISSIONLoadCommonResources@0` | `0x10C` scan |
+| `+0x114` | — | Init handle / capability field — read by `?InitCobra@@YAGPAUGlobalData@@@Z`, `?InitVideo@@YAGPAUGlobalData@@@Z` | `0x114` scan |
+| `+0x16F` | u32 | HUD state flags word (`DAT_0050cfef`) — advisory bits, damage state, ejection triggers | `FUN_00454140` |
+
+Weapon / projectile entity offsets are documented separately in [formats/JT.md](formats/JT.md) (PROJ_TYPE runtime mapping at `missile+0xA6` onward).
+
+---
+
 ## RE Resources
 
 **FA.SMS** — Binary symbol map shipping with the game. 3,829 MSVC-mangled C++ symbols with virtual addresses. Load into Ghidra or IDA to auto-name all functions. Structure: `u32` count + N × `[VA u32, strOffset u32]` + null-terminated string table (string table base at byte offset 30,636). See [formats/SMS.md](formats/SMS.md).

@@ -60,6 +60,8 @@ These items require opening the relevant format's Ghidra project under `%FA_PROJ
 
 - ~~**Entity runtime flags bits 17 and 21**~~ **RESOLVED (2026-05-19):** These are fuel warning flags in `DAT_0050cfef` (player aircraft HUD state word only — not applicable to all entity types). Bit 17 (0x20000) = running-on-fumes threshold trigger; bit 21 (0x200000) = fumes voice line already played (inhibit). Full fuel warning system mapped from `@SAYLowFuelMessage@8` decompile: bits 15–22 cover Bingo/Joker/fumes/out-of-fuel triggers (15–18) and per-level voice inhibits (19–22). See [formats/HUD.md](formats/HUD.md).
 
+- **Entity runtime flags bits 17 and 21**: Bit 17 (`0x20000`) is toggled as `_gamePrefs` bit at menu option 0x606; also at `DAT_0050ce81` — acts as "low fuel" trigger when bit 21 is clear. Bit 21 (`0x200000`) toggles at menu option 0x616; inhibit flag for "running on fumes" voice line + 0x380000 state. These are runtime entity flags (not `ot_flags`); their full semantic scope across all entity types needs confirmation.
+
 ---
 
 ## Undocumented Loose Files
