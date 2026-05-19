@@ -7,7 +7,7 @@ FA_2.LIB contains 2 `.HGR` files. Each defines a hangar screen — the aircraft 
 | File | Purpose |
 |------|---------|
 | H_AIRB.HGR | Air base hangar screen |
-| (second file TBD) | — |
+| H_AIRB2.HGR | Carrier hangar screen (confirmed via FA_2.LIB string scan) |
 
 ## Content
 
@@ -62,11 +62,6 @@ where `asStack_b[5]` is a 5-short correction table loaded from the sub-resource.
 Slot search (param_1 == '\0', standard assign): finds first slot where `x_offset != -1` and `occupied == 0`, copies its 8 bytes to output buffer, sets `occupied = 1`.
 
 Carrier assign path (param_1 != '\0'): walks a separate slot-index table at `param_5 + 0x117` (4 ints per entry, up to 4 entries); finds first entry pointing to a free slot; marks all referenced slots as occupied.
-
-## TODO — Deep Dive
-
-- Identify the second `.HGR` filename (likely `H_AIRB2.HGR` — carrier hangar)
-- Confirm meaning of `FUN_004a6cc0(pcVar5, 0x8104)` / `_RMAccess_8(local_50, 0x8104)` sub-resource key `0x8104` — likely a combined flags+type value passed to the resource manager to select the correct overlay asset
 
 ## Related
 

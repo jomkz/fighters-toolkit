@@ -288,7 +288,3 @@ The entity-relative offsets around the PROJ_TYPE base (`missile+0xa6`) were conf
 | `entity+0x114` | Init handle |
 | `entity+0x16F` | HUD state flags (also `DAT_0050cfef` = player entity + 0x16F per HUD.md) |
 
-## TODO
-
-- ~~Confirm bits 1–3, 5–6 of warhead flags lower byte~~ **Resolved (2026-05-18).** Complete scan of all 135 `.JT` PROJ_TYPE warhead dwords (34 unique values) confirms consistent category-level patterns for all five bits. No FA.EXE function tests any of them individually — confirmed across the full `DumpAllFunctions` decompile. Inferred semantics documented in the *Confirmed bit roles* table above. These bits are likely structural metadata; the authoritative consumer (if any) may be in an overlay DLL.
-- ~~`_PROJProc` symbol not found~~ **RESOLVED (2026-05-19):** `_PROJProc` (0x4c1f50) confirmed via `dumpAtForced` — vtable dispatcher; case 2 = `_PROJMoveProc` (0x4c11b0, physics update). **`_PROJMoveProc` also decompiled via `dumpAtForced` (2026-05-19).** Physics gap +0x50–+0x6E substantially resolved: motor phase thresholds (+0x57/+0x59/+0x5B/+0x5D), seeker search params (+0x69/+0x6B/+0x6D), and smoke trail params (+0x70–+0x74) confirmed. Warhead flag bits 1, 5, 6, 12, 13 confirmed from `_PROJMoveProc` / `_PROJAdd_40`. Remaining unknown: +0x50–+0x54 and scattered bytes +0x56/+0x58/+0x5A/+0x5C/+0x5E–+0x68 — overlapping aircraft flight model addresses, no missile-specific reads isolated. See *Agility / hit-probability bytes* section above.

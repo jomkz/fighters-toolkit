@@ -205,19 +205,6 @@ The Z-axis inversion (`origin_z - world_z`) means positive world-Z maps to upwar
 
 **World-space unit = 1 foot (confirmed).** Calibrated via JT.md seeker-range cross-check: `AIM9X lobe 1 max ^50000` = 8.2 nm; 50,000 feet / 6,076 ft/nm ≈ 8.23 nm ✓. The FA engine uses feet throughout for all world-space coordinates.
 
-## TODO — Deep Dive
-
-- ~~Confirm `obj flags` bit 10 and bit 9 semantics~~ **RESOLVED (2026-05-19):** Bit 9 (`$200`) confirmed from `@Reaction@12` — non-targetable by AI (immediate rejection). Bit 10 (`$400`) confirmed from `_Reaction_12`/`_MaskEvents_4` — civilian/non-combat structure event handling. See *flags Bit Survey* section above.
-
-**Confirmed resolved:**
-- `sides` suffix = format version (not faction count); table is flat array indexed by faction code; each version is a strict superset ✓
-- `tmap_named` col/row arguments are redundant with key encoding ✓
-- `w_goal` values surveyed: only 0 (stationary anchor) and 1 (active patrol) ✓
-- `react` field = three 16-bit hostile-faction bitmasks covering codes 0–47 ✓
-- `obj flags` bits 0, 1, 14 confirmed ✓
-- World-space unit = 1 foot (calibrated from JT.md seeker ranges: 50,000 units = 8.2 nm ✓) ✓
-- `tdic id=256` meaning ✓ — **RESOLVED (2026-05-18):** `0x100` is the type tag for `tmap_named` entries in the terrain dictionary, written by the `tmap_named` keyword handler. NOT a T2 tile-index reference. Distinguishes named-tile entries from indexed-tile entries in `_tdic`. Confirmed from `FUN_00481c10` (`_MISSIONTextProc@16`) decompile.
-
 ## Related
 
 - [T2.md](T2.md) — terrain height/color/type maps referenced via `map`
