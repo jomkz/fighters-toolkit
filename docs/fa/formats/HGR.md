@@ -28,22 +28,22 @@ Win32 PE DLL. `H_AIRB.HGR` decompresses to **4608 bytes**.
 
 ## Loading Mechanism (Confirmed)
 
-`FUN_00480150` (HGR load trigger, called from `_MISSIONInit2@0`):
-1. Calls `FUN_004809d0` — initialises `?hangarName@@3PADA` (`0x004fb1e8`) from `DAT_004fbbf0`, and copies `"ord_air3.PIC"` to `DAT_004fb1f8`
-2. `DAT_004fb198` selects carrier (non-zero) vs. land-base hangar
-3. Calls `FUN_004543c0(0, &DAT_004fb1e8, '\0', '\x01')` — actual HGR file loader
+`_SelectPlane` (HGR load trigger, called from `_MISSIONInit2@0`):
+1. Calls `FUN_004809d0` — initialises `?hangarName@@3PADA` (`0x004fb1e8`) from `DAT_004fbbf0`, and copies `"ord_air3.PIC"` to `armPicName`
+2. `pilotName` selects carrier (non-zero) vs. land-base hangar
+3. Calls `SelectRepairPlane(0, &hangarName, '\0', '\x01')` — actual HGR file loader
 
-`FUN_004543c0` (HGR file loader) — confirmed structure:
-- Loads HGR DLL via `FUN_004a6ae0(name, 0x8000)`
+`SelectRepairPlane` (HGR file loader) — confirmed structure:
+- Loads HGR DLL via `RMAccess(name, 0x8000)`
 - When `param_4 == '\0'` (standard load): skips first 13 bytes (`pcVar5 = pcVar6 + 0xd`)
-- Loads embedded sub-resource via `FUN_004a6cc0(pcVar5, 0x8104)`
+- Loads embedded sub-resource via `RMAccessHandle(pcVar5, 0x8104)`
 - Aircraft slot entries start at **offset +0x27** from the sub-resource base: 30 × 8-byte entries
-- Iterates up to `DAT_00529128` aircraft types (capped at 100)
+- Iterates up to `numItems` aircraft types (capped at 100)
 - Builds X coordinate array (`local_640`: 400 shorts) and Y coordinate array (`local_320`: 400 shorts) for aircraft screen positions
 
 ## Slot Entry Layout — Confirmed (2026-05-19)
 
-`FUN_004558f0` (VA 0x4558f0) is the hangar slot reader. It iterates the 30 × 8-byte slot entries starting at `param_5 + 0x27` (where `param_5` is the sub-resource handle returned by `FUN_004543c0`). Each 8-byte entry has this confirmed layout:
+`FUN_004558f0` (VA 0x4558f0) is the hangar slot reader. It iterates the 30 × 8-byte slot entries starting at `param_5 + 0x27` (where `param_5` is the sub-resource handle returned by `SelectRepairPlane`). Each 8-byte entry has this confirmed layout:
 
 | Byte offset | Type | Field | Notes |
 |-------------|------|-------|-------|

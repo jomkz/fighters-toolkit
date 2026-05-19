@@ -153,7 +153,7 @@ Confirmed bit roles from `_PROJLock@24` (0x004c2f20), `_PROJHitChance@28` (0x004
 | 6 | 0x000040 | Engine/propulsion tracking: when set, `_PROJEngineState_0()` runs each tick and adjusts thrust speed per phase (boost/cruise/coast) | `_PROJMoveProc`: `if ((flags & 0x40) != 0) { engine_state → speed update }` |
 | 7 | 0x000080 | Cannon / gun-round marker | `_DAMAGEDoHit@12`: bit 7=1 → play gun-hit sound; 20mm `0xc4` has bit 7=1 ✓ |
 | 9 | 0x000200 | Dual-lobe seeker lock processing | gates search/track lobe dispatch in `_PROJLock@24` |
-| 10 | 0x000400 | Active-radar / special guidance mode | gates `FUN_004629e0` + `FUN_00452e60` in `_PROJLock@24` |
+| 10 | 0x000400 | Active-radar / special guidance mode | gates `PushCurObj` + `HARDBestSeeker` in `_PROJLock@24` |
 | 12 | 0x001000 | Seeker re-acquisition far-range bias: when set, initial CF70 (re-acq distance) set at 75–100% of launch distance (90% roll) | `_PROJAdd_40`: `(flags & 0x1000) != 0 && _Percent_4(90%)` → CF70 = rand[75%, 100%] × launch_dist |
 | 13 | 0x002000 | Seeker re-acquisition near-range bias: when set (bit 12 check failed), initial CF70 set at 0–25% of launch distance | `_PROJAdd_40`: `(flags & 0x2000) != 0 && _Percent_4(90%)` → CF70 = rand[0%, 25%] × launch_dist |
 | 16 | 0x010000 | Air-to-air capable / search-mode init | AA missiles and 20mm; `@HARDFindJammer@4` |
@@ -197,12 +197,12 @@ The `^` range values in PROJ_TYPE seeker lobes use the same 1-foot unit as SEE f
 
 ### Agility / hit-probability bytes
 
-The PROJ_TYPE section base is at `missile+0xa6` in the runtime entity (confirmed entity base at `DAT_0050d268` in the FA scratchpad; PROJ_TYPE base at `DAT_0050d30e`). Confirmed reads from `_PROJHitChance@28` (0x004c3380), `FUN_004c3960` (proximity fuze check), `_PROJMoveProc` (0x4c11b0), `_PROJEngineState_0` (0x4c1170), `FUN_004c17a0`, and `FUN_004c1660`:
+The PROJ_TYPE section base is at `missile+0xa6` in the runtime entity (confirmed entity base at `cjt` in the FA scratchpad; PROJ_TYPE base at `DAT_0050d30e`). Confirmed reads from `_PROJHitChance@28` (0x004c3380), `FUN_004c3960` (proximity fuze check), `_PROJMoveProc` (0x4c11b0), `_PROJEngineState_0` (0x4c1170), `FUN_004c17a0`, and `FUN_004c1660`:
 
 | PROJ_TYPE offset | Global addr | Role (confirmed) | Source |
 |-----------------|-------------|-----------------|--------|
 | +0x4F | `DAT_0050d35d` | Proximity fuze range (byte) — fuze triggers when `target_arm_size ≥ this`; below 50% = miss | `FUN_004c3960` |
-| +0x55 | `DAT_0050d363` | Min maneuver rate (short) — lower clamp in `FUN_004c1120` velocity computation | `FUN_004c1120` |
+| +0x55 | `DAT_0050d363` | Min maneuver rate (short) — lower clamp in `PROJSpeed` velocity computation | `PROJSpeed` |
 | +0x57 | `DAT_0050d365` | Coast/glide speed — target speed during engine state 2 (coast phase, motor off) | `_PROJMoveProc` + `_PROJEngineState_0` |
 | +0x59 | `DAT_0050d367` | Boost phase end (ticks after launch) — transition from state 0 (boost) to state 1 (cruise) | `_PROJEngineState_0` |
 | +0x5B | `DAT_0050d369` | Motor burnout threshold (ticks after launch) — transition from state 1 (cruise) to state 2 (coast) | `_PROJEngineState_0` |
@@ -214,7 +214,7 @@ The PROJ_TYPE section base is at `missile+0xa6` in the runtime entity (confirmed
 | +0x69 | `DAT_0050d377` | Seeker search angular spread half-width (angle units) — used in `_Rand_4` for scan jitter | `FUN_004c17a0` |
 | +0x6B | `DAT_0050d379` | Search reacquisition interval (ticks) — added to `_currentTime` to set next scan-angle update | `FUN_004c17a0` |
 | +0x6D | `DAT_0050d37b` | Active search window duration (ticks; 0 = disabled) — while elapsed < this, missile scans via random angles | `_PROJMoveProc` |
-| +0x6F | `DAT_0050d37d` | Maneuver rate percentage (byte) — `(this × input_rate) / 100`; upper bound in `FUN_004c1120` | `FUN_004c1120` |
+| +0x6F | `DAT_0050d37d` | Maneuver rate percentage (byte) — `(this × input_rate) / 100`; upper bound in `PROJSpeed` | `PROJSpeed` |
 | +0x70 | `DAT_0050d37e` | Smoke trail flags (bits 0–6 = trail count; bit 7 = continuous smoke flag) | `_PROJMoveProc` |
 | +0x71 | `DAT_0050d37f` | Smoke trail param 1 (passed to `_GRAPHICAddSmokeAdder_40`) | `_PROJMoveProc` |
 | +0x72 | `DAT_0050d380` | Smoke trail param 2 | `_PROJMoveProc` |
@@ -250,7 +250,7 @@ The missile enters a search scan phase while elapsed flight time < `PROJ_TYPE[+0
 
 `FUN_004c3890` (called by `_PROJHitChance@28`) is the Pk range-interpolation function. It reads the engagement range reference at `PROJ_TYPE+0x31` (secondary lobe max range), divides it into quartiles, and linearly interpolates between the four Pk bytes at +0x75–0x78.
 
-`FUN_004c1120` is the velocity-clamp function: applies `PROJ_TYPE+0x6F` % to an input angular rate, clamps between `PROJ_TYPE+0x55` minimum and OBJ_TYPE speed-limit fields at `entity+0x67/+0x6b`.
+`PROJSpeed` is the velocity-clamp function: applies `PROJ_TYPE+0x6F` % to an input angular rate, clamps between `PROJ_TYPE+0x55` minimum and OBJ_TYPE speed-limit fields at `entity+0x67/+0x6b`.
 
 **`_PROJProc` dispatch** (confirmed via `dumpAtForced`, 2026-05-19):
 

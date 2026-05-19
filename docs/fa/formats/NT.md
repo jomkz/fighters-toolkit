@@ -148,7 +148,7 @@ All hardpoints have bit 3 (`$8`) set — this appears to be the "active weapon s
 | `$8` | All ground-unit hardpoints; majority of naval hardpoints | Standard weapon slot — present on all weapon types |
 | `$a` | Subset of naval hardpoints on ships with 4+ HPs | Bit 1 (`$2`) set in addition to bit 3: AI-guided weapon targeting active |
 
-Bit 1 (`$2`) is **confirmed** as the AI-guided targeting flag — **`FUN_004736f0` (GVProc draw handler, param_1=5)**. When iterating type-7 missile hardpoints, the handler checks `*data_ptr & 2`; if set, calls `FUN_004c4700` (AI targeting update) to compute intercept geometry for that hardpoint. Ships like IOWA and KIROV use `$a` on specific hardpoints (Phalanx, Sea Sparrow, AAA30) that the ship AI actively steers toward targets; SARAN and KRIVAK with only 3 hardpoints do not use the AI-guided path.
+Bit 1 (`$2`) is **confirmed** as the AI-guided targeting flag — **`NPCWeaponsProc` (GVProc draw handler, param_1=5)**. When iterating type-7 missile hardpoints, the handler checks `*data_ptr & 2`; if set, calls `PROJServiceWeapon` (AI targeting update) to compute intercept geometry for that hardpoint. Ships like IOWA and KIROV use `$a` on specific hardpoints (Phalanx, Sea Sparrow, AAA30) that the ship AI actively steers toward targets; SARAN and KRIVAK with only 3 hardpoints do not use the AI-guided path.
 
 SA2A has 6 hardpoints (launch tubes), all `$8`. Ships with 4 hardpoints mix `$8` and `$a` in varying ratios (e.g. IOWA 2+2, TICON 1+3).
 
@@ -201,8 +201,8 @@ Full survey of all 84 NT files.
 | 0 | `$1` | Targetable | Confirmed | Absent on CATGUY (purely visual) and A_M1939 (zone marker) |
 | 4 | `$10` | Naval vessel | **Confirmed** — `FUN_0043df7b` | Naval-weapon gate: weapon type 3 requires this bit; absent on all ground vehicles. |
 | 5 | `$20` | Armed / valid combat target | **Confirmed** — `FUN_0043df7b` | Hard gate in targeting acquisition — entity with bit 5 clear is immediately rejected as a valid target. Absent on passive MULE/EJECT. |
-| 8 | `$100` | Has collideable oriented hull | **Confirmed** — `FUN_0042c9b0` | When set with non-zero heading, uses angle-based hit detection (`FUN_004c6654`). Present on large ships; absent on small boats and ground vehicles. |
-| 9 | `$200` | Large hull with 3D-oriented bounding box | **Confirmed** — `FUN_0042c9b0` | Tested combined as `& 0x300` (bits 8+9): triggers full 3D bounding-box rotation (`FUN_004d60d8`) for hit detection. Never set without bit 8. Large ships (carriers, oil rig, GCI); absent on standard destroyers/cruisers. |
+| 8 | `$100` | Has collideable oriented hull | **Confirmed** — `FUN_0042c9b0` | When set with non-zero heading, uses angle-based hit detection (`Rotate2`). Present on large ships; absent on small boats and ground vehicles. |
+| 9 | `$200` | Large hull with 3D-oriented bounding box | **Confirmed** — `FUN_0042c9b0` | Tested combined as `& 0x300` (bits 8+9): triggers full 3D bounding-box rotation (`MakeViewRotationMatrix`) for hit detection. Never set without bit 8. Large ships (carriers, oil rig, GCI); absent on standard destroyers/cruisers. |
 | 10 | `$400` | Civilian/light type | **Confirmed** — `_Reaction_12` (0x464040), `_MaskEvents_4` (0x463ea0) | Infantry (SOLDIER, RUNNER), small civilian craft (FISHBT, JUNK, RBOAT), CATGUY. Drives `_Reaction_12` and `_MaskEvents_4` event-system handlers; also toggles bay-door actuator. Shared semantic with OT bit 10. |
 | 11 | `$800` | Ground-mobile unit | **Confirmed** — `FUN_0042c9b0` | OBJ_TYPE+9 & 0x800 sets a ground-mobile state flag in targeting/collision resolver. Present on all ground vehicles; absent on naval vessels (carriers have it via extra bits). |
 | 15 | `$8000` | Flight deck present | **Confirmed** — `FUN_00425196` | When set, forces targeting category to 4 (flight deck special class). Also tested combined with bit 22 (`& 0x408000`). All carrier types (CLEM, KITT, NIMZ, KIEV, WASP). |
