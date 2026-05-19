@@ -46,11 +46,11 @@ The `dword` is **full-tank fuel weight in pounds** (confirmed). It is 6.6× the 
 | 350 gal | 2310 | 2300 |
 | 500 gal | 3300 | 3300 |
 
-`FUN_00452c20` (hardpoint load) initializes the fuel store as `dword × quantity × 256` — fixed-point (×256) representation. `_BurnFuel@0` decrements this value by `fuel_rate × 5` each simulation batch.
+`HARDLoad` (hardpoint load) initializes the fuel store as `dword × quantity × 256` — fixed-point (×256) representation. `_BurnFuel@0` decrements this value by `fuel_rate × 5` each simulation batch.
 
 ### Empty weight / word (empty_weight)
 
-The `word` is **empty tank structural weight in pounds** (confirmed via `FUN_004516b0`). The loadout weight model computes: `total_tank_weight = empty_weight × count + (current_fuel >> 8)`. This produces correct full-tank weights:
+The `word` is **empty tank structural weight in pounds** (confirmed via `FMGetWeight`). The loadout weight model computes: `total_tank_weight = empty_weight × count + (current_fuel >> 8)`. This produces correct full-tank weights:
 
 | Tank | word (empty) + dword (fuel) = full weight |
 |------|------------------------------------------|
@@ -87,4 +87,4 @@ The GAS `dword` is in the same unit — **fuel weight in pounds**. The ratio 990
 
 ### Empty weight word — Confirmed as pounds (structural weight)
 
-`FUN_004516b0` (loadout weight calculator) reads the `word` field as the base structural weight and adds it to the remaining fuel: `weight = word × count + (fuel_store >> 8)`. Cross-checking against typical external fuel tank empty weights (120–260 lbs for 150–500 gal aluminum tanks) confirms the `word` values are empty tank structural weights in pounds.
+`FMGetWeight` (loadout weight calculator) reads the `word` field as the base structural weight and adds it to the remaining fuel: `weight = word × count + (fuel_store >> 8)`. Cross-checking against typical external fuel tank empty weights (120–260 lbs for 150–500 gal aluminum tanks) confirms the `word` values are empty tank structural weights in pounds.

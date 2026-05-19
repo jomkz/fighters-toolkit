@@ -23,13 +23,13 @@ Note: the previous claim that `_T_HorizonProc` is an export was incorrect — it
 
 ## LAYER Struct Layout (0x160 bytes)
 
-Confirmed from FA.EXE decompilation of `FUN_004b4370`, `FUN_004b3be0`, `FUN_004b3cb0`, and `FUN_004b4720`.
+Confirmed from FA.EXE decompilation of `WRInit`, `FUN_004b3be0`, `FUN_004b3cb0`, and `WRWeatherEffects`.
 
 | Offset | Type | Description |
 |--------|------|-------------|
 | +0x00 | u8 | **Flags** — bit 0: end-of-array sentinel; bit 1: brightness-gradient enabled |
-| +0x02 | s32 | **sel_alt_min** — **raw** altitude lower bound; `CopyLayersToRuntime` selects this layer when `sel_alt_min ≤ DAT_00552934 ≤ sel_alt_max` |
-| +0x06 | s32 | **sel_alt_max** — raw altitude upper bound (same scale as `DAT_00552934`) |
+| +0x02 | s32 | **sel_alt_min** — **raw** altitude lower bound; `CopyLayersToRuntime` selects this layer when `sel_alt_min ≤ currentTimeOfDay ≤ sel_alt_max` |
+| +0x06 | s32 | **sel_alt_max** — raw altitude upper bound (same scale as `currentTimeOfDay`) |
 | +0x0A | s32 | **alt_min** — rendering lower bound in `altitude >> 8` units; `GetLayerBoundary` compares `param_1 >> 8` against this field |
 | +0x0E | s32 | **alt_max** — rendering upper bound in `altitude >> 8` units |
 | +0x12 | s32 | **fog_alt_low** — lower altitude bound of fog visibility ramp; below this `GetFogColour` returns `vis_lo` index |
@@ -75,17 +75,17 @@ Each LAYER defines a piecewise-linear altitude→visibility ramp:
 5. Return `colour_array[index]` from the entry pointed to by `colour_entry_ptr` (+0x3A).
 6. Return value is a bool: `altitude ≤ extinction_param` (i.e., within the extinction/fog zone).
 
-`FUN_004b31f0` (`GetFogColourAtBoundary`) blends the colour from two adjacent layers when near an altitude transition boundary, clamping the ramp fields against per-frame weather globals before calling `GetFogColour`.
+`WRSetRemaps` (`GetFogColourAtBoundary`) blends the colour from two adjacent layers when near an altitude transition boundary, clamping the ramp fields against per-frame weather globals before calling `GetFogColour`.
 
-### Angle-based layer selection (`FUN_004cc4b4` — `SetActiveLayerByAngle`)
+### Angle-based layer selection (`SetShadingTable` — `SetActiveLayerByAngle`)
 
 The atmosphere changes depending on the view elevation angle (passed in AX register as a signed 16-bit value):
 
 - **Above horizon** (angle ≥ 1): index = `(angle × sky_angle_scale) >> 8`; select `sky_layer_array[index]` (header +0x18 base, up to 7 entries at +0x18..+0x30).
 - **At or near horizon** (−0xC0 ≤ angle ≤ 0): use `sky_layer_array[0]` (header +0x18).
-- **Below horizon** (angle < −0xC0, and `DAT_00510794` flag set): index = `((−0xC0 − angle) × below_angle_scale) >> 6`; select `below_layer_array[index]` (header +0x44 base, entries at +0x44..+0x5C).
+- **Below horizon** (angle < −0xC0, and `lighteningAllowed` flag set): index = `((−0xC0 − angle) × below_angle_scale) >> 6`; select `below_layer_array[index]` (header +0x44 base, entries at +0x44..+0x5C).
 
-The result is written to `DAT_00583dac` (secondary active-layer pointer used by the rendering pipeline).
+The result is written to `currentShadeTable` (secondary active-layer pointer used by the rendering pipeline).
 
 ## Confirmed Functions
 
@@ -93,7 +93,7 @@ The result is written to `DAT_00583dac` (secondary active-layer pointer used by 
 |---------|------|------|
 | `0x004b4370` | `ParseLayerFile` | Load LAY DLL, copy header to globals, init LAYER array |
 | `0x004b46d0` | `FreeLayerFile` | Close/free the loaded LAY DLL handle |
-| `0x004b3170` | `GetLayerByIndex` | `DAT_00583da8 = (&DAT_00580db0)[param_1]` — select active layer |
+| `0x004b3170` | `GetLayerByIndex` | `currentTintTable = (&hdr)[param_1]` — select active layer |
 | `0x004b3750` | `CopyLayersToRuntime` | Copy LAYER entries from DLL data into `curLayers` array |
 | `0x004b3820` | `InterpolateLayers` | Blend two LAYER structs based on altitude fraction |
 | `0x004b3be0` | `GetLayerAtAltitude` | Search `curLayers` for entry spanning the given altitude; interpolate |
@@ -103,17 +103,17 @@ The result is written to `DAT_00583dac` (secondary active-layer pointer used by 
 | `0x004b3cb0` | `ApplyBrightnessGradient` | Altitude-driven tint of zenith/horizon RGB bands |
 | `0x004b3d90` | `UpdateSkyState` | Per-frame: smooth-transition all atmosphere parameters, apply to working palette |
 | `0x004b4170` | `UpdateAuroraClouds` | Aurora/cloud density update based on aircraft altitude and weather flags |
-| `0x004b4680` | `LoadPICByWildcard` | Parse `*` wildcard range from LAYER string field, call `FUN_004c686c` to load PIC |
+| `0x004b4680` | `LoadPICByWildcard` | Parse `*` wildcard range from LAYER string field, call `Sprintf` to load PIC |
 | `0x004b46f0` | `SetSkyActive` | `DAT_0050c8b8 = param_1` |
 | `0x004b4700` | `ClearFrameColorTable` | Zero the 0xc0-dword frame colour buffer |
 | `0x004b4720` | `GetLayerVisibility` | Walk LAYER entries in altitude range, return minimum visibility byte |
-| `0x004b3190` | `GetLayerBoundary` | Search `curLayers` (base `DAT_00583250`) at stride 0x160 for entry spanning `alt >> 8`; sets `*param_2 = 1` if at a layer transition boundary |
+| `0x004b3190` | `GetLayerBoundary` | Search `curLayers` (base `curLayers`) at stride 0x160 for entry spanning `alt >> 8`; sets `*param_2 = 1` if at a layer transition boundary |
 | `0x004b3410` | `GetFogColour` | `(layer, altitude, *out_colour)` → bool; linearly interpolates `vis_lo..vis_hi` over `fog_alt_low..fog_alt_high`, looks up `colour_array[idx]` via `colour_entry_ptr`; returns `altitude ≤ extinction_param` |
 | `0x004b31f0` | `GetFogColourAtBoundary` | Wrapper: calls `GetFogColour` for both the primary layer (`DAT_00580d90`) and the boundary layer found by `GetLayerBoundary`; blends output by altitude position within the transition zone |
 | `0x004b4320` | `WRFogLayerUpdate` | Per-frame fog update: add random jitter in [−25, +26] to `LAYER+0xfe`, clamp to [0xD9, 0xEB] |
 | `0x004b4790` | `ClearAtmosphereBuffer` | Clears 0x843 dwords at `DAT_00581140`; called at end of `ParseLayerFile` |
-| `0x004cc4b4` | `SetActiveLayerByAngle` | Sets `DAT_00583dac` (secondary active-layer ptr) from a signed 16-bit elevation angle: above horizon → `sky_layer_array[angle × sky_angle_scale >> 8]`; near/at horizon → `sky_layer_array[0]`; below −0xC0 → `below_layer_array[(−0xC0 − angle) × below_angle_scale >> 6]` |
-| `0x004aacf0` | `T_DefaultHorizon` | Default horizon renderer (FA.EXE); reads colour bytes from `DAT_00583da8+0xD4..+0xFC` (active LAYER colour table); calls `FUN_004c924c` / `FUN_004c942c` for gradient rendering |
+| `0x004cc4b4` | `SetActiveLayerByAngle` | Sets `currentShadeTable` (secondary active-layer ptr) from a signed 16-bit elevation angle: above horizon → `sky_layer_array[angle × sky_angle_scale >> 8]`; near/at horizon → `sky_layer_array[0]`; below −0xC0 → `below_layer_array[(−0xC0 − angle) × below_angle_scale >> 6]` |
+| `0x004aacf0` | `T_DefaultHorizon` | Default horizon renderer (FA.EXE); reads colour bytes from `currentTintTable+0xD4..+0xFC` (active LAYER colour table); calls `SolidHorizon` / `GouraudHorizon` for gradient rendering |
 
 ## Location
 
@@ -149,15 +149,15 @@ The CODE section contains all rendering data. The engine interprets this data; `
 
 ### DLL data header (VA 0x1000, first 0x78 bytes)
 
-These 30 dwords are copied verbatim into FA.EXE's BSS segment at `DAT_00580db0` when the LAY file is loaded. After relocation all pointer fields hold absolute VAs within the loaded DLL image.
+These 30 dwords are copied verbatim into FA.EXE's BSS segment at `hdr` when the LAY file is loaded. After relocation all pointer fields hold absolute VAs within the loaded DLL image.
 
 | Header offset | FA.EXE global | Role |
 |--------------|---------------|------|
-| +0x00 | DAT_00580db0 | Parameter field (count/flags — semantics TBD) |
+| +0x00 | hdr | Parameter field (count/flags — semantics TBD) |
 | +0x04 | DAT_00580db4 | → `_DAT_0055be28` |
 | +0x08 | DAT_00580db8 | → `_DAT_0055be2c` |
 | +0x0C | DAT_00580dbc | → `_DAT_0055be30` |
-| +0x10 | DAT_00580dc0 | VA of default LAYER entry → copied to active-layer ptrs (`DAT_00583da8`, `DAT_00583dac`, `DAT_005843c4`, `DAT_005843c8`) at load |
+| +0x10 | DAT_00580dc0 | VA of default LAYER entry → copied to active-layer ptrs (`currentTintTable`, `currentShadeTable`, `DAT_005843c4`, `DAT_005843c8`) at load |
 | +0x14 | DAT_00580dc4 | **sky_angle_scale** — multiplied by above-horizon elevation angle, shifted >>8 to get `sky_layer_array` index; used by `SetActiveLayerByAngle` |
 | +0x18 | DAT_00580dc8 | **sky_layer_array[0]** — first element of 10-entry LAYER-ptr array indexed by above-horizon angle (`(&DAT_00580dc8)[idx]`); indices 1–6 also aliased to `_DAT_0055be34`..`_DAT_0055be48` by `ParseLayerFile`; indices 7–9 at +0x34–+0x3C (no named alias — accessed only via pointer arithmetic) |
 | +0x1C | DAT_00580dcc | sky_layer_array[1] → `_DAT_0055be34` |

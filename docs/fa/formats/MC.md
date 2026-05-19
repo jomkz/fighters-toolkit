@@ -48,16 +48,16 @@ Win32 PE DLL. All observed `.MC` files decompressed to **4608 bytes**.
 
 ## Campaign Condition Text Files (.mc_M, .mc_nato_M)
 
-These are **distinct** from the `.MC` PE DLL files above. The campaign engine (`FUN_00428412`) loads campaign-wide condition scripts as plain-text files with suffix `.mc_M` (standard campaign) or `.mc_nato_M` (NATO campaign variant). Loaded via `FUN_00481940` → `FUN_00481c10` (text parser using `FUN_00483c90` as tokenizer + `__strlwr`).
+These are **distinct** from the `.MC` PE DLL files above. The campaign engine (`FUN_00428412`) loads campaign-wide condition scripts as plain-text files with suffix `.mc_M` (standard campaign) or `.mc_nato_M` (NATO campaign variant). Loaded via `CallMissionProc` → `MISSIONTextProc` (text parser using `FUN_00483c90` as tokenizer + `__strlwr`).
 
-Confirmed keywords parsed by `FUN_00481c10`:
+Confirmed keywords parsed by `MISSIONTextProc`:
 
 | Keyword | Effect |
 |---------|--------|
 | `textformat` | Sets file format version/type flag |
-| `briefmap` | Sets `DAT_005516e0 = 1` (briefing map active) |
-| `selectplane` | Sets `DAT_0054e498 = 1` (plane selection screen) |
-| `armplane` | Sets `DAT_00552820 = 1` (arming screen) |
+| `briefmap` | Sets `doBriefMap = 1` (briefing map active) |
+| `selectplane` | Sets `doSelectPlane = 1` (plane selection screen) |
+| `armplane` | Sets `doArmPlane = 1` (arming screen) |
 | `layer` | Reads layer name and integer parameter |
 | (startup coords) | Reads 3 fixed-point world-space coordinates (× 256) |
 

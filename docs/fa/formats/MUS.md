@@ -89,7 +89,7 @@ Traced from `_SEQmusic` (`0x00446B70`), `?MusicOn` (`0x004329E0`), `?MusicVolume
 _SEQmusic(name, seq_idx)
   → appends name to base path (DAT_004f4f6c) to form "M_AIR.MUS" etc.
   → calls MusicOn(filename, seq_idx)
-      → FUN_004a6ae0(filename, 0x10c)   — loads MUS DLL from LIB archive
+      → RMAccess(filename, 0x10c)   — loads MUS DLL from LIB archive
       → _AIL_allocate_sequence_handle   — allocate Miles Sound System handle
       → _AIL_init_sequence(handle, mus_data, seq_idx)  — pass MUS CODE section to AIL
       → _AIL_start_sequence(handle)     — begin playback
@@ -106,7 +106,7 @@ AIL_set_XMIDI_master_volume(handle, vol * 127 / 100)
 
 ### `_SEQfadein` / `_SEQfadeout`
 
-These (`0x00446890` / `0x00446910`) are **palette (screen) fades**, not music fades. They operate on a 768-byte RGB palette table (256 × 3 bytes at `DAT_00583dc0`). They are unrelated to MUS audio.
+These (`0x00446890` / `0x00446910`) are **palette (screen) fades**, not music fades. They operate on a 768-byte RGB palette table (256 × 3 bytes at `curPalette`). They are unrelated to MUS audio.
 
 ### `seq_idx` parameter
 

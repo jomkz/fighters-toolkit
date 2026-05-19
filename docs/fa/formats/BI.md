@@ -92,7 +92,7 @@ The trilingual maneuver name strings (e.g. `"GND ATTACK;BODENANGRIFF;ATTAQUE AU 
 
 ### Overview
 
-The interpreter is `_CTExecProgram@4` (`FUN_00466970`). It executes at most 5000 opcodes per call, then forcibly invokes `CTDo_exit` to prevent infinite loops.
+The interpreter is `_CTExecProgram@4` (`CTExecProgram`). It executes at most 5000 opcodes per call, then forcibly invokes `CTDo_exit` to prevent infinite loops.
 
 **Runtime state globals:**
 
@@ -176,9 +176,9 @@ The interpreter is `_CTExecProgram@4` (`FUN_00466970`). It executes at most 5000
 | `FUN_00465de0` | `read_duration` | unsigned int 0–15 (capped) | clamps to [0, 15] |
 | `FUN_00465e00` | `read_speed` | speed in binary degrees, clamped to aircraft [min_speed, max_speed] | reads aircraft speed bounds at runtime |
 
-### CTDo_move (`FUN_00465cc0`) — confirmed arg sequence
+### `CTDo_move` — confirmed arg sequence
 
-Calls `FUN_004ac510(heading, alt, roll_or_any, alt_is_any, vel_x, vel_y, speed, duration)`:
+Calls `MVRMove(heading, alt, roll_or_any, alt_is_any, vel_x, vel_y, speed, duration)`:
 1. `heading` (binary degrees, 0–359° normalized) — from `read_heading`
 2. `alt` (binary degrees, ±90°) — from `read_angle`
 3. `roll` (binary degrees, ±180°, or `0x7FFFFFFF` = `any`) — from `read_alt`
@@ -187,11 +187,11 @@ Calls `FUN_004ac510(heading, alt, roll_or_any, alt_is_any, vel_x, vel_y, speed, 
 7. `speed` (binary degrees, clamped to aircraft speed range) — from `read_speed`
 8. `duration` (0–15 ticks) — from `read_duration`
 
-`FUN_004ac510` (_MVRMove): clamps `alt` to ±0x3FFC (±90°); when `alt_is_any` = true → maneuver type 6 (any altitude) / roll target = 0; when false → type 1, roll target = `roll` arg.
+`MVRMove` (_MVRMove): clamps `alt` to ±0x3FFC (±90°); when `alt_is_any` = true → maneuver type 6 (any altitude) / roll target = 0; when false → type 1, roll target = `roll` arg.
 
-### CTDo_turn (`FUN_00465ea0`) — confirmed arg sequence
+### `CTDo_turn` — confirmed arg sequence
 
-1. min heading (degrees, clamped to current turn rate via `FUN_004780d0`)
+1. min heading (degrees, clamped to current turn rate via `COTurnRate`)
 2. max heading (clamped similarly)
 3. type/mode (5 = timed, 6 = `any`-time/unconditional)
 4. target heading in binary degrees (`arg * 182`, i.e. `arg * 65536/360`)

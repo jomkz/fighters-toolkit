@@ -548,7 +548,7 @@ Cross-reference of symbols that directly load, initialize, or parse named file f
 
 | Address | Symbol | Role |
 |---------|--------|------|
-| `0x47A130` | (Ghidra: `FUN_0047a130`) | MM text keyword parser |
+| `0x47A130` | (Ghidra: `LibFileExists`) | MM text keyword parser |
 | `0x4B4370` | `WRInit(…)` | Dispatcher for `.LAY` lines in `.MM` |
 | `0x4A7D70` | `T_ImmediateVisibility(…)` | Terrain visibility update from MM |
 
