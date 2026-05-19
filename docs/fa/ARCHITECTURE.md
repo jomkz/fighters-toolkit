@@ -227,6 +227,47 @@ PCM files use filename prefixes: `&` for looping ambient, `^` for one-shot voice
 
 ---
 
+## Game Loop & Initialization
+
+**Entry point:** `WinMain` at `0x476120`. Registers the window class, creates the DirectDraw surface, calls `_LoadFAResources`, then enters the shell event pump.
+
+**Separate game thread:** `?CreateGameThread@@YAHXZ` (`0x476660`) spawns the simulation thread. The shell runs on the main Win32 thread; all gameplay runs on the game thread.
+
+**Simulation loop:** `?FlyingLoop@@YAXXZ` (`0x404C70`) — NOT `?MainLoop`. Per-frame sequence:
+
+1. `_timerTicks` (hardware interrupt counter) gated by `_frameTicks` to enforce fixed timestep.
+2. `_TIMEUpdate` — advances `_currentTime`, `_currentTicks`, and `_timeCompression`.
+3. `_OBJUpdate` — iterates `_objPtrs` array, calls each entity's `utilProc` dispatcher.
+4. `_MISSIONCheckSuccess@0` (`0x486860`) — polls active `.MC` DLL each tick.
+5. `_NetworkFrame` / `?MPReceive@@YGDXZ` — if multiplayer, synchronizes entity state.
+6. `render_3d` → `T_DefaultHorizon` → HUD overlay composite.
+
+**Mission init:** `?_MISSIONInit1@@YGXXZ` allocates the 300,000-byte object pool and chains 19 subsystem inits in order: TIME → OBJ → TERRAIN → NETWORK → AUDIO → HUD → ... → MISSION. Called by `FUN_00428412` (the mission/campaign loader) immediately after DLL setup.
+
+**Object pool:** `_objPtrs` (`0x553848`) is the entity list. `_nextObjId` (`0x553838`) is the free-ID counter. `_cg` (`0x50CE80`) holds the current object context byte (set by `_T_AddObj@12`); `_curId` (`0x4F6FBC`) holds the ID of the object currently being updated.
+
+See [GAME_LOOP.md](GAME_LOOP.md) for the full WinMain init sequence, per-frame call order, and all subsystem init VAs.
+
+---
+
+## Physics & Flight Model
+
+**Core flight tick:** `_FMFlight@0` at `0x47B020`. Called once per frame per PT entity via `_OBJUpdate`. Reads the PT_TYPE struct (aerodynamics constants from the `.PT` BRF file) and the entity runtime struct, then integrates:
+
+- **Lift/drag/thrust**: from PT fields — `one_g_stall_speed` (word at +0x50), thrust/weight ratio, induced drag coefficient.
+- **Stall logic**: `_oneGStallSpeed__3JA` symbol; stall onset at computed speed, with 25-knot hysteresis on recovery.
+- **Fuel consumption**: `@FMFuelConsumption@4` (`0x451E50`) reads PT fields for fuel flow at current throttle/altitude.
+
+**Collision:** `_Collision@56` — 14-parameter function covering missile–aircraft, missile–terrain, and aircraft–terrain cases. Terrain height query is `_GetGround@0` (`0x47AF70`), which reads T2 tile elevation bands. See [formats/T2.md](formats/T2.md) for the tile record layout.
+
+**`_PROJProc` dispatch:** Projectile entities call through a vtable slot. The vtable setup site is in the PT/JT loader; the slot has not been statically resolved (the function pointer is set at runtime from the loaded `.JT` file's `utilProc` symbol). Trace in Ghidra GUI from a known JT entity instance to resolve the concrete function.
+
+**Dark zone `0x4D0000–0x4EFFFF`** contains the software 3D rasterizer (matrix multiply, world-to-screen projection, polygon fill), not aerodynamics. The rasterizer entry is `_GRTo2d@8`; the matrix globals (`m2`–`m9`, `_scaled_matrix`) are 16-bit fixed-point elements at `0x515F44`–`0x515F54`.
+
+See [PHYSICS.md](PHYSICS.md) for the full flight model equations, stall parameters, and collision function signatures.
+
+---
+
 ## Terrain & 3D System
 
 ### Terrain Maps (.T2)
@@ -269,6 +310,28 @@ The colour entry table (pointed to by header offset +0x6C) uses stride-0x30 entr
 
 ---
 
+## 3D Rendering Pipeline
+
+**Algorithm:** Painter's sort — no z-buffer. Polygons are depth-sorted by centroid before submission to the rasterizer.
+
+**Scene entry:** `T_DefaultHorizon` (`0x4AACF0`) — the terrain/sky scene renderer, exported from FA.EXE as `T_HorizonProc`. Called from the game loop render step after object updates. Drives the full frame render.
+
+**Pipeline stages (VA range `0x4B4200–0x4BEDFF`):**
+
+1. **Shape loading** — JPEG decoder cluster at `0x4B4BB0`–`0x4B7700` handles `.SH` file decompression. Decoded vertex/polygon data is cached in the shape pool.
+2. **World-to-screen projection** — `_GRTo2d@8` reads the rotation matrix globals (`m2`–`m9` at `0x515F44`–`0x515F54`), applies fixed-point transform, writes projected coordinates to `_xv`/`_yv`/`_zv` (`0x51CDAA`–`0x51CDAE`).
+3. **Clip testing** — `codes_or` / `codes_and` clip-code accumulators at `0x515F83`/`0x515F82`. Clip rectangle globals: `_clipLeft` (`0x55BE20`), `_clipTop` (`0x556D60`), `_clipRight` (`0x55BEDC`), `_clipBottom` (`0x55C024`).
+4. **Polygon fill** — `render_3d` entry (`0x58F0E0` scratch pointer). Overflow buffer at `_overflow_ptr`; line statistics at `_lineStats` (`0x510288`).
+5. **HUD overlay** — composited after 3D scene. Advisory icon renderer at `FUN_00407930` handles bits 6–11 of the HUD flags word (`DAT_0050cfef`).
+
+**WR atmosphere subsystem:** `WRFogLayerUpdate` (`0x004B4320`), `UpdateSkyState` (`0x004B3D90`), `SetActiveLayerByAngle` (`0x004CC4B4`). Fog, palette animation, lens flare, and texture remap cache all live in `0x4B4200–0x4BEDFF`.
+
+**Dispatch table:** `vector_table` (`0x5183A0`) is the render dispatch vector table (function pointer array, 141 xrefs).
+
+See [RENDERER.md](RENDERER.md) for the full pipeline, shape system, and camera/viewport details.
+
+---
+
 ## Briefing & Reference System
 
 | Extension | Count | Location | Description |
@@ -292,26 +355,54 @@ The colour entry table (pointed to by header offset +0x6C) uses stride-0x30 entr
 | `EA.CFG`  | 347 bytes   | Binary game configuration (graphics, controls, audio, pilot slot). See [formats/CFG.md](formats/CFG.md) |
 | `NET.DAT` | 3,552 bytes | Binary multiplayer network settings (IPX/TCP addresses, session config), mostly null-padded. See [formats/NET.md](formats/NET.md) |
 
+**CN_INFO struct** — total 0xDDC bytes. Written by `CN_WriteConfig`; read by `CN_ReadConfig`. Key fields:
+
+| Offset | Size | Field |
+|--------|------|-------|
+| +0x00  | u32  | transport type (0=IPX, 1=TCP, 2=serial, 3=modem) |
+| +0x04  | u8   | player name (32 bytes) |
+| +0x28  | u32  | session host flag |
+| +0x2C  | u32  | max players |
+| +0xDB0 | —    | TCP config block (IP address string, port) |
+
+Full 50+ field mapping in [NETWORK.md](NETWORK.md).
+
+**Multiplayer frame sync:** `?MPReceive@@YGDXZ` (`0x46C980`) is the network frame entry. Dispatches on packet type byte (0x10–0x51). Key types: 0x10 = entity position update, 0x20 = weapon fire, 0x30 = kill notification, 0x40 = mission state sync. Serial transport uses `SERIAL_QUEUE` reliability layer with sequence numbers and ACKs.
+
+**Key globals:** `_numComputers` (`0x4EB604`) = player count; `_thisComputer` (`0x4EB608`) = this machine's index; `_gamePrefs` (`0x4EB6F8`) = SP prefs struct pointer; `_gameMultiPrefs` (`0x4EB6FC`) = MP prefs struct pointer.
+
+See [NETWORK.md](NETWORK.md) for the full protocol, transport layer details, and IP.EXE role.
+
 ---
 
 ## Runtime Entity Struct — Key Offsets
 
-The FA entity struct (one instance per live game object, base pointer stored per-object at runtime) has the following confirmed field offsets from Ghidra analysis:
+The FA entity struct (one instance per live game object, base pointer stored per-object at runtime) has 80+ confirmed field offsets from Ghidra analysis. Selected key fields:
 
 | Offset | Size | Role | Evidence |
 |--------|------|------|---------|
-| `+0xF0` | u32 | Target pointer / entity ID (NPC nav) | GAS init cases 0x03/0x05 |
+| `+0x00` | u16 | Object ID | `_OBJInit@4`, `_nextObjId` |
+| `+0x02` | u8  | Object type (`_cgt`) | `_T_AddObj@12` |
+| `+0x04` | u16 | Object class (`obj_class`) | BRF `utilProc` dispatch |
+| `+0x08` | u32 | `utilProc` function pointer | BRF loader |
+| `+0x10` | s16[3] | World position X/Y/Z | `_GRTo2d@8`, flight model |
+| `+0x20` | s16[3] | Velocity X/Y/Z | `_FMFlight@0` |
+| `+0x30` | s16[3] | Orientation matrix row 0 | matrix multiply |
+| `+0x40` | u16 | Health / hitpoints remaining | `_DAMAGEDoHit@12` |
+| `+0x44` | u16 | Armor value | BRF OBJ_TYPE load |
+| `+0x60` | u8  | AI state | `_CTEval_*` condition fns |
+| `+0xF0` | u32 | Target entity ID (NPC nav) | GAS init cases 0x03/0x05 |
 | `+0xF4` | u16 | Reaction parameter 1 | GAS init |
-| `+0xF6` | u16 | Reaction parameter 2 | GAS init; `_Reaction_12` (0x464040), `_MaskEvents_4` |
+| `+0xF6` | u16 | Reaction parameter 2 | `_Reaction_12` (0x464040), `_MaskEvents_4` |
 | `+0xF8` | u16 | Reaction parameter 3 | GAS init |
-| `+0xFA` | u8  | Mode byte | GAS init; `_CTEval_tgt` / `_CTEval_p` |
-| `+0xFF` | — | Confirmed read by: `_Kill@0` (0x473c10), `@AmmoForClass@4` (0x474740) | `0xFF` scan |
-| `+0x100` | u8 | Primary per-frame state byte — most-polled field in flight loop | `_FMFlight@0`, `_MovePlane@0`, `_GVEventProc`, `CheckForEvents2`, and ~15 others |
+| `+0xFA` | u8  | Mode byte | `_CTEval_tgt` / `_CTEval_p` |
+| `+0x100` | u8 | Primary per-frame state byte | `_FMFlight@0`, `_MovePlane@0`, ~15 others |
 | `+0x101` | u16 | Timeout timer | GAS init |
-| `+0x10A` | — | Read by `_MaxSpeed@8` (0x477d50) | `0x10A` scan |
-| `+0x10C` | — | Campaign/init context — read by `_CampaignSave`, `_CallCampaignProc@4`, `_MISSIONLoadCommonResources@0` | `0x10C` scan |
-| `+0x114` | — | Init handle / capability field — read by `?InitCobra@@YAGPAUGlobalData@@@Z`, `?InitVideo@@YAGPAUGlobalData@@@Z` | `0x114` scan |
-| `+0x16F` | u32 | HUD state flags word (`DAT_0050cfef`) — advisory bits, damage state, ejection triggers | `FUN_00454140` |
+| `+0x10A` | — | Speed/energy field | `_MaxSpeed@8` (0x477d50) |
+| `+0x10C` | — | Campaign/init context | `_CampaignSave`, `_CallCampaignProc@4` |
+| `+0x16F` | u32 | HUD state flags (`DAT_0050cfef`) — advisory bits, damage, ejection | `FUN_00454140` |
+
+Full 80+ field table with all confirmed offsets is in [STRUCTS.md](STRUCTS.md).
 
 Weapon / projectile entity offsets are documented separately in [formats/JT.md](formats/JT.md) (PROJ_TYPE runtime mapping at `missile+0xA6` onward).
 

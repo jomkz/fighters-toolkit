@@ -26,6 +26,13 @@ public class AnalyzeFA extends FAScript {
         analyzeMC();
         analyzeT2DLL();
 
+        // New subsystem coverage -- dark zones
+        analyzeGameLoop();
+        analyzeRenderer();
+        analyzePhysics();
+        analyzeNetwork();
+        analyzeInput();
+
         closeOutput();
     }
 
@@ -484,5 +491,203 @@ public class AnalyzeFA extends FAScript {
         dumpCallers(0x00452ff0L);
         header("GAS  --  FUN_00473f50 / 00473be0");
         dumpAt(0x00473f50L); dumpAt(0x00473be0L);
+    }
+
+    // -----------------------------------------------------------------------
+    // GAMELOOP  --  main game loop, per-frame object dispatcher, init
+    // -----------------------------------------------------------------------
+    private void analyzeGameLoop() throws Exception {
+        header("INIT  --  WinMain / _main entry point");
+        dumpSymbolsMatching("winmain", "_main", "maincrtstartup", "wwinmain");
+        searchStrings(new String[]{"WinMain", "GameLoop", "JANES", "Fighters Anthology"});
+        header("INIT  --  game initialization sequence");
+        dumpSymbolsMatching("initgame", "_initgame", "gameinit", "_gameinit",
+                "startgame", "_startgame", "gamestart", "_gamestart");
+        header("LOOP  --  main game loop body");
+        dumpSymbolsMatching("gameloop", "_gameloop", "mainloop", "_mainloop",
+                "frameupdate", "_frameupdate", "gametick", "_gametick");
+        header("LOOP  --  frame counter and timing");
+        dumpSymbolsMatching("framecounter", "frametimer", "gametimer", "_gametimer",
+                "timestep", "_timestep", "tickcount", "_tickcount");
+        header("LOOP  --  per-frame dispatcher range 0x468000-0x479DFF");
+        dumpRange(0x00468000L, 0x00479DFFL);
+        header("OBJ  --  object add / remove / iterate");
+        dumpSymbolsMatching("_objadd", "objadd", "_objremove", "objremove",
+                "_objinit", "objinit", "_objproc", "_objupdate", "objupdate",
+                "_objlist", "objlist", "_entityadd", "entityadd");
+        header("OBJ  --  callers of _GVProc (0x473db0)");
+        dumpCallers(0x00473db0L);
+        header("OBJ  --  callers of _PROJProc (0x4c1f50)");
+        dumpCallers(0x004c1f50L);
+        header("INIT  --  range 0x401000-0x406000 (entry point cluster)");
+        dumpRange(0x00401000L, 0x00406000L);
+        header("INIT  --  campaign and mission init");
+        dumpSymbolsMatching("_missioninit", "missioninit", "_campaigninit", "campaigninit",
+                "_missionstart", "missionstart", "_levelload", "levelload");
+        header("SHUTDOWN  --  game shutdown and cleanup");
+        dumpSymbolsMatching("shutdown", "_shutdown", "gameshutdown", "_gameshutdown",
+                "cleanup", "_cleanup", "exitgame", "_exitgame");
+    }
+
+    // -----------------------------------------------------------------------
+    // RENDERER  --  3D rendering pipeline, shape/sprite system, camera
+    // -----------------------------------------------------------------------
+    private void analyzeRenderer() throws Exception {
+        header("RENDER  --  scene dispatch and render loop");
+        dumpSymbolsMatching("renderscene", "_renderscene", "drawscene", "_drawscene",
+                "rendworld", "_rendworld", "renderframe", "_renderframe",
+                "drawworld", "_drawworld", "renderall", "_renderall");
+        header("RENDER  --  callers of T_DefaultHorizon (0x4aacf0)");
+        dumpCallers(0x004aacf0L);
+        header("RENDER  --  callers of @G_Tile@32 (0x447aa5)");
+        dumpCallers(0x00447aa5L);
+        header("SHAPE  --  shape load and cache");
+        dumpSymbolsMatching("_shload", "shload", "_loadsh", "loadsh",
+                "_shapeinit", "shapeinit", "_shrender", "shrender");
+        searchStrings(new String[]{".SH", ".sh", "wave1", "SH\0"});
+        header("SHAPE  --  range 0x4B4200-0x4BEDFF");
+        dumpRange(0x004b4200L, 0x004bedffL);
+        header("POLY  --  polygon submission and rasterizer");
+        dumpSymbolsMatching("_polygon", "polygon", "_drawpoly", "drawpoly",
+                "_vertex", "vertex", "_zbuffer", "zbuffer", "_zbuf", "zbuf");
+        header("SPRITE  --  sprite and billboard rendering");
+        dumpSymbolsMatching("_sprite", "sprite", "_billboard", "billboard",
+                "_drawsprite", "drawsprite", "_particle", "particle");
+        header("CAMERA  --  viewport and projection");
+        dumpSymbolsMatching("_camera", "camera", "_viewport", "viewport",
+                "_projection", "projection", "_frustum", "frustum",
+                "_setcamera", "setcamera", "_lookat", "lookat");
+        searchStrings(new String[]{"camera", "Camera", "viewport", "Viewport"});
+        header("CULL  --  visibility culling");
+        dumpSymbolsMatching("_cull", "cull", "_visible", "visible",
+                "_frustumcull", "frustumcull", "_lod", "lod", "_inview", "inview");
+        header("DDRAW  --  DirectDraw surface management");
+        dumpSymbolsMatching("_ddraw", "ddraw", "_surface", "surface",
+                "_flip", "flip", "_blit", "blit", "_pageflip", "pageflip");
+        searchStrings(new String[]{"DirectDraw", "IDirectDraw", "CreateSurface"});
+        header("WR  --  WR raster rendering subsystem");
+        dumpSymbolsMatching("wrsetup", "wrinit", "wrflush", "wrrender",
+                "_wrsetremaps", "wrsetremaps", "_wrpoly", "wrpoly");
+        header("PIC  --  texture/PIC loading");
+        dumpSymbolsMatching("_picload", "picload", "_loadpic", "loadpic",
+                "_picrender", "picrender");
+        searchStrings(new String[]{".PIC", ".pic"});
+    }
+
+    // -----------------------------------------------------------------------
+    // PHYSICS  --  flight model, collision detection
+    // -----------------------------------------------------------------------
+    private void analyzePhysics() throws Exception {
+        header("FM  --  flight model subsystem symbols");
+        dumpSymbolsMatching("_fmupdate", "fmupdate", "_fminit", "fminit",
+                "_lift", "lift", "_drag", "drag", "_thrust", "thrust",
+                "_stall", "stall", "_aoa", "aoa", "_airspeed", "airspeed",
+                "_mach", "mach", "_altitude", "altitude", "_glimit", "glimit",
+                "@fmburnfuel", "fmburnfuel");
+        header("FM  --  callers of @FMFuelConsumption (0x451e50)");
+        dumpCallers(0x00451e50L);
+        header("FM  --  callers of _BurnFuel (0x451e80)");
+        dumpCallers(0x00451e80L);
+        header("PROJ  --  callers of _PROJProc wrapper (0x4c1f10)");
+        dumpCallers(0x004c1f10L);
+        header("PROJ  --  _PROJProc dispatch (0x4c1f50)");
+        dumpAt(0x004c1f50L);
+        header("PROJ  --  PROJMoveProc (0x4c11b0)");
+        dumpAt(0x004c11b0L);
+        header("TERRAIN  --  _GetGround@0 (0x47af70) and callers");
+        dumpAt(0x0047af70L);
+        dumpCallers(0x0047af70L);
+        header("TERRAIN  --  do_use_terrain_detail (0x4d2344) and callers");
+        dumpAt(0x004d2344L);
+        dumpCallers(0x004d2344L);
+        header("TERRAIN  --  range 0x4D0000-0x4EFFFF");
+        dumpRange(0x004d0000L, 0x004effffL);
+        header("COLLIDE  --  collision symbols");
+        dumpSymbolsMatching("_collide", "collide", "_collision", "collision",
+                "_impact", "impact", "_hitcheck", "hitcheck",
+                "_intersect", "intersect", "_overlap", "overlap");
+        header("COLLIDE  --  callers of _DAMAGEDoHit (0x40f970)");
+        dumpCallers(0x0040f970L);
+        header("COLLIDE  --  ?PROJDamageProc (0x4c1870) and callers");
+        dumpAt(0x004c1870L);
+        dumpCallers(0x004c1870L);
+        header("PT  --  PT loader and init");
+        dumpSymbolsMatching("_ptload", "ptload", "_loadpt", "loadpt",
+                "_ptinit", "ptinit", "_ptread", "ptread");
+        searchStrings(new String[]{".PT", ".pt"});
+    }
+
+    // -----------------------------------------------------------------------
+    // NETWORK  --  multiplayer protocol, CN_INFO struct
+    // -----------------------------------------------------------------------
+    private void analyzeNetwork() throws Exception {
+        header("CN  --  CN_ReadConfig / CN_WriteConfig");
+        dumpSymbolsMatching("cn_readconfig", "_cn_readconfig", "cn_writeconfig", "_cn_writeconfig",
+                "cnreadconfig", "cnwriteconfig", "cn_init", "_cn_init", "cninit");
+        header("CN  --  CN_INFO struct field scan (offsets 0x00-0x200)");
+        findFunctionsReadingOffsets(0x00400000L, 0x00540000L, 0x00, 0x200);
+        header("MP  --  ?MPReceive (0x46C980) and callers");
+        dumpAt(0x0046c980L);
+        dumpCallers(0x0046c980L);
+        header("MP  --  multiplayer state and symbols");
+        dumpSymbolsMatching("mpreceive", "mpsend", "mpupdate", "mpinit",
+                "mpframe", "mpsync", "mpstatus", "mpsession",
+                "mpjoin", "mphost", "_mprecv", "_mpsend", "_mpupdate");
+        header("MP  --  range 0x482200-0x4AACEF");
+        dumpRange(0x00482200L, 0x004aacefL);
+        header("NET  --  IPX transport");
+        dumpSymbolsMatching("_ipxsend", "ipxsend", "_ipxrecv", "ipxrecv",
+                "_ipxinit", "ipxinit", "_ipxopen", "ipxopen");
+        searchStrings(new String[]{"IPX", "ipx", "Novell"});
+        header("NET  --  TCP/IP transport");
+        dumpSymbolsMatching("_tcpsend", "tcpsend", "_tcprecv", "tcprecv",
+                "_tcpinit", "tcpinit", "_tcpconnect", "tcpconnect");
+        searchStrings(new String[]{"TCP", "socket", "winsock", "WinSock"});
+        header("NET  --  serial / modem transport");
+        dumpSymbolsMatching("_serialsend", "serialsend", "_modemsend", "modemsend",
+                "_comminit", "comminit", "_commopen", "commopen");
+        searchStrings(new String[]{"COM", "modem", "Modem", "serial"});
+        header("NET  --  session management");
+        dumpSymbolsMatching("_netsession", "netsession", "_sessioninit", "sessioninit",
+                "_sessionjoin", "sessionjoin", "_sessionhost", "sessionhost");
+        searchStrings(new String[]{"session", "Session", "lobby", "host", "join"});
+        header("MP  --  player/entity sync");
+        dumpSymbolsMatching("mpsetfuel", "?mpsetfuel", "mpsetpos", "mpsetstate",
+                "mpsetweapon", "mpsetdamage", "mpentityupdate");
+    }
+
+    // -----------------------------------------------------------------------
+    // INPUT  --  joystick, keyboard, mouse, world-coord transforms
+    // -----------------------------------------------------------------------
+    private void analyzeInput() throws Exception {
+        header("INPUT  --  joystick init and poll");
+        dumpSymbolsMatching("_joyinit", "joyinit", "_joypoll", "joypoll",
+                "_joyread", "joyread", "_joyupdate", "joyupdate",
+                "_dinputinit", "dinputinit", "_dinpoll", "dinpoll");
+        searchStrings(new String[]{"joystick", "Joystick", "DirectInput",
+                "joyGetDevCaps", "joyGetPos"});
+        header("INPUT  --  range 0x420000-0x42FFFF");
+        dumpRange(0x00420000L, 0x0042ffffL);
+        header("INPUT  --  keyboard handling");
+        dumpSymbolsMatching("_keyinit", "keyinit", "_keypoll", "keypoll",
+                "_keyread", "keyread", "_keydown", "keydown",
+                "_keyboard", "keyboard", "_keybind", "keybind");
+        searchStrings(new String[]{"GetAsyncKeyState", "GetKeyState"});
+        header("INPUT  --  mouse handling");
+        dumpSymbolsMatching("_mouseinit", "mouseinit", "_mousepoll", "mousepoll",
+                "_mouseread", "mouseread", "_mousepos", "mousepos",
+                "_cursorinit", "cursorinit", "_cursor", "cursor");
+        searchStrings(new String[]{"GetCursorPos", "SetCursorPos", "ShowCursor"});
+        header("INPUT  --  control mapping and deadzone");
+        dumpSymbolsMatching("_ctrlmap", "ctrlmap", "_deadzone", "deadzone",
+                "_sensitivity", "sensitivity", "_calibrate", "calibrate");
+        header("WORLD  --  ?MAPWorldToScreen (0x422380)");
+        dumpAt(0x00422380L);
+        header("WORLD  --  world coordinate symbols");
+        dumpSymbolsMatching("worldtoscreen", "screentoworld", "worldtovp",
+                "mapworld", "_mapworld", "_wtoscreen", "wtoscreen");
+        header("WORLD  --  viewport and projection symbols");
+        dumpSymbolsMatching("_vpinit", "vpinit", "_vpupdate", "vpupdate",
+                "_project", "projectpoint", "_unproject", "unproject");
     }
 }

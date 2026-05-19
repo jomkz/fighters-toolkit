@@ -21,6 +21,7 @@ if /I "%1"=="--setup" (
 echo Running all FA.EXE analysis scripts...
 echo.
 
+:: --- Original subsystem scripts ---
 call "%~dp0run_ghidra.bat" AnalyzeLAY.java
 call "%~dp0run_ghidra.bat" AnalyzeHUD.java
 call "%~dp0run_ghidra.bat" AnalyzeDLG.java
@@ -37,6 +38,20 @@ call "%~dp0run_ghidra.bat" AnalyzeGAS.java
 call "%~dp0run_ghidra.bat" AnalyzeCAM.java
 call "%~dp0run_ghidra.bat" AnalyzeMC.java
 call "%~dp0run_ghidra.bat" AnalyzeT2DLL.java
+
+:: --- Dark-zone targeted scripts (new subsystems) ---
+call "%~dp0run_ghidra.bat" AnalyzeGameLoop.java
+call "%~dp0run_ghidra.bat" AnalyzeRenderer.java
+call "%~dp0run_ghidra.bat" AnalyzePhysics.java
+call "%~dp0run_ghidra.bat" AnalyzeNetwork.java
+call "%~dp0run_ghidra.bat" AnalyzeInput.java
+
+:: --- Struct and global recovery ---
+call "%~dp0run_ghidra.bat" DumpGlobals.java
+call "%~dp0run_ghidra.bat" RecoverStructs.java
+
+:: --- Full function dump (highest ROI -- covers all remaining dark zones) ---
+call "%~dp0run_ghidra.bat" DumpAllFunctions.java
 
 :: Consolidated single-file report (all subsystems in one pass)
 call "%~dp0run_ghidra.bat" AnalyzeFA.java

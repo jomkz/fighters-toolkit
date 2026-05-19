@@ -6,12 +6,12 @@ FA_2.LIB contains 6 `.CAM` files — one per built-in campaign. Pilot save files
 
 | File | Missions | Theater prefix |
 |------|----------|----------------|
-| BALTIC.CAM | — | — |
-| EGYPT.CAM | — | — |
-| KURILE.CAM | — | — |
+| BALTIC.CAM | 40 (`~B01.M`–`~B40.M`) | `B` |
+| EGYPT.CAM | 40 (`~E01.M`–`~E40.M`) | `E` |
+| KURILE.CAM | 35 (`~K01.M`–`~K35.M`) | `K` |
 | UKRAINE.CAM | 50 (`~U01.M`–`~U50.M`) | `U` |
 | VIETNAM.CAM | 25 (`~T01.M`–`~T25.M`) | `T` |
-| VLAD.CAM | — | — |
+| VLAD.CAM | 40 (`~V01.M`–`~V40.M`) | `V` |
 
 The `~` prefix on mission filenames is the game's notation for LIB-resident mission files.
 
@@ -65,47 +65,17 @@ Short string keys track per-mission and campaign-wide state:
 | `<pre>WON` | `UWON` | Campaign won flag |
 | `<pre>LOST` | `ULOST` | Campaign lost flag |
 
-## Exported Functions (Campaign Engine API)
+## Reference Chain: .CAM → .M → .MM / .LAY / .MC
 
-All CAM DLLs export the same core set of functions. Campaign-specific functions are also exported.
+The `.CAM` DLL holds only its own mission list (`~<prefix>NN.M` strings). It does **not** reference `.MM` theater files, `.LAY` sky files, or `.MC` condition files directly. Those references are carried by each `.M` mission file via three keywords:
 
-### Common API (all campaigns)
+| Keyword | Target | Example |
+|---------|--------|---------|
+| `map` | `.MM` theater file | `map ukr.T2` → loads `UKR.MM` |
+| `layer` | `.LAY` sky file | `layer day2.LAY 0` |
+| `code` | `.MC` condition DLL | `code u01` → loads `U01.MC`; `code extra01` → loads `EXTRA01.MC` |
 
-| Export | Description |
-|--------|-------------|
-| `_AddCampaignPlane` | Add an aircraft to the campaign fleet |
-| `_AddCampaignStore` | Add a weapon/store to the campaign pool |
-| `_CampaignPlanesLeft@0` | Return remaining aircraft count |
-| `_CheckCD` | Verify correct CD is inserted |
-| `_DoFadeout@0` | Trigger screen fade transition |
-| `_GetKeySlow` | Wait for key input |
-| `_InitCampaignPilot` | Initialize pilot state for campaign start |
-| `_SeqContinue` | Resume a cutscene sequence |
-| `_SeqStart` | Start a cutscene sequence |
-| `_campaignFailed` | Handle campaign failure outcome |
-| `_campaignFailures` | Access failure count |
-| `_campaignSucceeded` | Handle campaign success outcome |
-| `_missionName` | Return display name for current mission |
-| `_playerDead` | Handle player aircraft loss |
-
-### Campaign-Specific Examples
-
-| Export | Campaign | Description |
-|--------|----------|-------------|
-| `_UkraineAddA7` | UKRAINE | Special unlock: add A-7 aircraft to fleet |
-| `_UkraineCheckMaxPlanes` | UKRAINE | Enforce fleet size cap |
-| `_UkraineMedals` | UKRAINE | Ukraine-specific medal logic |
-| `_UkraineQuit` | UKRAINE | Campaign exit handler |
-| `_UkraineRescued` | UKRAINE | Rescued pilot tracking |
-| `_VietnamMedals` | VIETNAM | Vietnam-specific medal logic |
-| `_VietnamPromotions` | VIETNAM | Rank promotion handling |
-| `_VietnamQuit` | VIETNAM | Campaign exit handler |
-| `_VietnamRescued` | VIETNAM | Rescued pilot tracking |
-| `_PlayCobra@4` | VIETNAM | Play Cobra helicopter cutscene |
-
-## Relationship to .MC Files
-
-The 21 `.MC` files in FA_2.LIB appear to be per-mission state checkpoints (e.g. `~U01.MC`, `CATFAIL.MC`, `TRAIN01.MC`), not per-campaign. The `.CAM` DLL likely loads the appropriate `.MC` file when a mission completes to update the campaign progression state. The exact `.MC` format is TBD.
+The `.MC` file to load is determined by the `code` directive in the `.M` file, not by the `.CAM` DLL. Most missions use a unique per-mission `.MC` (`U01.MC`, `K16.MC`, etc.); bonus missions share the generic `EXTRA01.MC` gate via `code extra01`.
 
 ## Location
 
@@ -128,11 +98,62 @@ Execution sequence:
 
 `_CallMissionProc_8` (0x481940) is the central mission-DLL dispatcher. Its callers: `FUN_00428412`, `_ChooseScoreInit` (0x441c60), `_MISSIONTextProc@16` (0x481c10), `_MISSIONCheckSuccess@0` (0x486860), and `?usnfmain@@YAXXZ` (0x403700 — main loop).
 
+## DLL Entry Point and Command Protocol
+
+`AnalyzeCAMDLL.java` confirmed the dispatch function for KURILE.CAM (representative of all CAM DLLs). The single exported entry point is at PE code offset `0x1000` (`FUN_00001000`). FA.EXE calls it via `_CallMissionProc_8`, passing a command byte as the first stack argument (`in_stack_00000004`).
+
+**Command byte protocol:**
+
+| Cmd | Action |
+|-----|--------|
+| `0x00` | No-op / init query — returns immediately |
+| `0x01` | String match + copy: scan `DAT_000014e1` (mission name string) against current `_missionName`, then copy result to `DAT_000017b6` |
+| `0x02`–`0x03` | No-op |
+| `0x04` | Flag check: if `DAT_000017bc != 0`, set `DAT_000017a4 = 1` and invoke the campaign callback subfunction |
+| `0x05`–`0x08` | No-op |
+
+Data globals are stored in the PE `.data` section at offsets around `0x1700`–`0x17C0`. The mission list string table starts at `DAT_000014e1`.
+
+## Import Table (Functions CAM DLL Calls from FA.EXE)
+
+The `.idata` section of each CAM DLL lists the FA.EXE functions it calls back into. Note: these appear in the CAM DLL's **import table** (calls out to FA.EXE) — they are not functions exported by the DLL.
+
+**Common imports (all campaigns):**
+
+| Function | Role |
+|----------|------|
+| `_AddCampaignPlane` | Add aircraft to campaign fleet |
+| `_AddCampaignStore` | Add weapon/store to campaign pool |
+| `_CampaignPlanesLeft@0` | Return remaining aircraft count |
+| `_CheckCD` | Verify correct CD inserted |
+| `_DoFadeout@0` | Trigger screen fade transition |
+| `_GetKeySlow` | Wait for key input |
+| `_InitCampaignPilot` | Initialize pilot state for campaign start |
+| `_SeqContinue` | Resume a cutscene sequence |
+| `_SeqStart` | Start a cutscene sequence |
+| `_campaignFailed` | Handle campaign failure outcome |
+| `_campaignFailures` | Access failure count |
+| `_campaignSucceeded` | Handle campaign success outcome |
+| `_missionName` | Global: current mission name string pointer |
+| `_playerDead` | Handle player aircraft loss |
+| `@G_Flush@4` | Flush graphics to screen |
+
+**Campaign-specific imports (KURILE.CAM example):**
+
+| Function | Role |
+|----------|------|
+| `_KurileMedals` | Kurile-specific medal award logic |
+| `_KurilePromotions` | Rank promotion handling |
+| `_KurileQuit` | Campaign exit handler |
+| `_KurileRescued` | Rescued pilot tracking |
+
+UKRAINE.CAM, VIETNAM.CAM, etc. import analogous `_Ukraine*` / `_Vietnam*` functions from FA.EXE.
+
 ## TODO — Deep Dive
 
-- Disassemble UKRAINE.CAM to confirm the binary layout of the mission state and weapon tables (offsets, sizes, field encoding)
-- Identify which `.MC` files correspond to which campaigns and missions (`_callMissionProc_8` selects via `_mc_M`/`_mc_nato_M` name)
-- Determine how `.CAM` references theater `.MM` files (if at all — the `.M` mission files may carry that reference instead)
+- ~~Disassemble UKRAINE.CAM to confirm the binary layout~~ **RESOLVED (2026-05-18):** KURILE.CAM analyzed via `AnalyzeCAMDLL.java`. Dispatch at PE offset 0x1000, command protocol mapped, import table extracted. See `%FA_PROJECT%/output/AnalyzeCAMDLL.txt`.
+- ~~Identify which `.MC` files correspond to which campaigns and missions~~ **RESOLVED (2026-05-18):** The `.M` mission file carries a `code <name>` directive that names the `.MC` DLL for that mission. Each `.CAM` mission list entry maps 1:1 to a `.M` file; the `.M` file selects its own condition DLL. Most missions use per-mission files (`U01.MC`, `K16.MC`, etc.); bonus missions share `EXTRA01.MC`.
+- ~~Determine how `.CAM` references theater `.MM` files~~ **RESOLVED (2026-05-18):** It doesn't. The `.M` mission file carries the `map <theater>.T2` and `layer <sky>.LAY` directives. `.CAM` only contains the ordered mission filename list. See *Reference Chain* section above.
 - Disassemble `FUN_00428340` (post-init finalizer called twice in the launch sequence) to determine its role
 
 ## Related
