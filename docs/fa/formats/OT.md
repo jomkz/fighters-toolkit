@@ -142,4 +142,4 @@ All confirmed in the `word hitpoints` field (field index 23). Values appear to b
 
 ## TODO
 
-- **Bit 10 (`$400`)**: Confirmed resolved. `_Reaction_12` (0x464040) and `_MaskEvents_4` (0x463ea0) are the entity+0x09 & 0x400 testers; also toggles bay-door actuator.
+- **Bit 10 (`$400`)**: **Resolved.** `_Reaction_12` (0x464040) and `_MaskEvents_4` (0x463ea0) confirmed as the `entity+0x09 & 0x400` testers; also toggles bay-door actuator.

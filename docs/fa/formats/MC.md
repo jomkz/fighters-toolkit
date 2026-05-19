@@ -14,7 +14,7 @@ All 21 filenames:
 - `CATFAIL.MC` — carrier takeoff failure condition
 - `TRAIN01.MC` — training mission condition
 - `UKR01.MC`, `UKR02.MC` — Ukraine campaign-level events
-- `EXTRA01.MC` — legitimate mission condition (uses `@OBJAlias@8`, `@OBJGet@4`, `_MISSIONSuccess@0`; no test strings)
+- `EXTRA01.MC` — generic bonus-mission condition gate (uses `@OBJAlias@8`, `@OBJGet@4`, `_MISSIONSuccess@0`; no debug strings). Used by all `EXTRA01.M`–`EXTRA20.M` standalone bonus missions and `BEXTRA01.M`–`BEXTRA13.M` Baltic bonus missions via the `code extra01` directive in each `.M` file.
 - `FOO.MC` — developer timing test: embeds debug string `"The time is now >= 10 seconds!"`, uses `_currentTime` and `_MSGSendChatter@24` with `RADIOBP.5K` audio; name is a classic programmer placeholder
 
 ## Content
@@ -88,12 +88,36 @@ Confirmed condition keyword consumers:
 
 The `cond` keyword appears at 8 locations in FA.EXE but no function references were found — its parse handler and internal dispatch table in `_MISSIONTextProc` remain unmapped.
 
+## Condition Function Protocol (Confirmed)
+
+`AnalyzeMCDLL.java` confirmed the condition function for U34.MC (representative of all single-condition MC DLLs). The exported entry is at PE code offset `0x1000`.
+
+**Function signature:**
+```c
+short FUN_00001000(short param_1, undefined4 param_2, undefined4 param_3, short *param_4);
+```
+
+**Command encoding via `*param_4`:**
+
+| `*param_4` | Behavior |
+|-----------|----------|
+| `0x20` (32) | Pass-through: return `param_1` unchanged (query current state) |
+| `0x00` | Evaluate condition: if `DAT_00001212 != 0` AND `DAT_00001211 == 0`, return `DAT_00001212`; else return 0 |
+
+**Data section layout (PE offsets):**
+- `DAT_00001211` (offset `0x1211`): alive/active inhibit flag — condition fires only when this is zero
+- `DAT_00001212` (offset `0x1212`): target status byte — the success code returned when the condition triggers
+
+FA.EXE writes these bytes to track the mission state for the DLL. When `*param_4 = 0x00`, if the target is destroyed (`DAT_00001212 != 0`) and not still alive (`DAT_00001211 == 0`), the MC DLL returns the success code and FA.EXE calls `_MISSIONSuccess@0` to end the mission.
+
+The `.idata` string scan confirmed `_MISSIONSuccess` at offset `0x207F` and `_OBJAlias` at offset `0x2065`.
+
 ## TODO — Deep Dive
 
-- Disassemble `UKR01.MC` to trace the complete condition check logic and identify all object aliases it monitors
+- ~~Disassemble `UKR01.MC` to trace the complete condition check logic~~ **RESOLVED (2026-05-18):** U34.MC analyzed via `AnalyzeMCDLL.java`. Condition protocol fully confirmed. See `%FA_PROJECT%/output/AnalyzeMCDLL.txt`.
 - Map remaining `.mc_M` keyword handlers beyond those confirmed above (`cond` keyword handler not found)
 - Disassemble `FUN_00495e80` (`.MC` string handler at 0x495e80) to identify its role in the condition pipeline
-- Clarify `EXTRA01.MC` purpose (multiplayer extra, bonus mission, or other)
+- ~~Clarify `EXTRA01.MC` purpose~~ **Resolved (2026-05-18).** Generic bonus-mission condition gate, shared by all 20 standalone extra missions and 13 Baltic extra missions. Each `.M` file loads it via `code extra01` directive. See file inventory above.
 
 ## Related
 

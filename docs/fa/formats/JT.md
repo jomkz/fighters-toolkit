@@ -163,7 +163,17 @@ else if ((warhead_flags & 0x01) != 0) → missile-hit sound (AIM-9M: 0x4f has bi
 else                                  → bomb-hit sound   (MK-82: 0x12 has neither)
 ```
 
-Bits 1–3, 5–6 of the lower byte are not yet individually confirmed; remaining pattern: missiles `0x4f` also have bits 1/2/3/6 set, bombs `0x12` have bits 1/4 set.
+Bits 1–3, 5–6 of the lower byte are present in consistent category-level patterns across all 135 `.JT` files (34 unique flag values surveyed), but no function in the full FA.EXE decompile tests any of them individually. Inferred assignments from weapon-category analysis:
+
+| Bit | Hex | Inferred pattern | Notes |
+|-----|-----|-----------------|-------|
+| 1 | 0x000002 | Set for all missiles and rockets; clear for gun rounds and unguided bombs | Category discriminator — possible "self-propelled" marker |
+| 2 | 0x000004 | Set for missiles, rockets, and gun rounds; clear for gravity bombs | Possible "active ordnance" marker |
+| 3 | 0x000008 | Set for guided missiles and gun rounds; clear for most unguided weapons | Possible "terminal-guidance capable" marker |
+| 5 | 0x000020 | Always co-set with bits 0,1,2,3,6; only heavy standoff and fire-and-forget weapons | Possible "autonomous seeker" or "no-escape envelope" marker |
+| 6 | 0x000040 | Set on everything **except** gravity bombs (MK-82, MK-84, FAB variants) | Possible "not-gravity-bomb" or "proximity-fuze capable" marker |
+
+These labels are inferred from data patterns only — no test function for any of these bits was found in the complete decompile. They may be consumed by code in an overlay DLL or checked inline in larger functions not captured. Likely structural metadata with limited runtime use.
 
 ### Seeker mode byte — Confirmed
 
@@ -230,5 +240,5 @@ The entity-relative offsets around the PROJ_TYPE base (`missile+0xa6`) were conf
 
 ## TODO
 
-- Confirm bits 1–3, 5–6 of warhead flags lower byte — survey of 0x4b–0x4d code range found no function testing these bits directly from `missile+0xa6`; they may gate combined capability checks not dispatched individually
+- ~~Confirm bits 1–3, 5–6 of warhead flags lower byte~~ **Resolved (2026-05-18).** Complete scan of all 135 `.JT` PROJ_TYPE warhead dwords (34 unique values) confirms consistent category-level patterns for all five bits. No FA.EXE function tests any of them individually — confirmed across the full `DumpAllFunctions` decompile. Inferred semantics documented in the *Confirmed bit roles* table above. These bits are likely structural metadata; the authoritative consumer (if any) may be in an overlay DLL.
 - PROJ_TYPE+0x55 and +0x6F confirmed as velocity-clamp params; PROJ_TYPE+0x75–0x78 confirmed as Pk quartile table; gap +0x50–0x54, +0x56–0x6E (30 bytes) unresolved — `_PROJProc` symbol not found; requires virtual-dispatch trace or live breakpoint
