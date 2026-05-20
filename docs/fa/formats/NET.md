@@ -56,29 +56,31 @@ File off.  CN_INFO  Size  Field
                            — seeded from _janesOnlineName by CN_SetFactoryDefaults and CN_ReadConfig
                            — also passed directly as name to SER_ExchangeNames in serial mode
 0x0058      [0x54]    4   transport type dword — selects active protocol:
+                             2 = modem (set by RunModemConfigurationScreen; confirmed by MODEM.DAT diff)
                              3 = serial / RS-232 (SER_Initialize2_5 checks for == 3)
                              4 = TCP/IP (doConfigurationScreen checks for == 4)
-                             other values used by NetSetProtocol for IPX/modem/NetBEUI
+                             other values used by NetSetProtocol for IPX/NetBEUI
 0x0064      [0x60]    4   baud rate index dword (factory default: 10)
                              7=9600 · 8=19200 · 9=38400 · 10=57600 · 11=57600 · 12=28800 · 13=115200
                              (SER_Initialize4 switch; also used by MOD_InitPortAndModem)
 0x0068      [0x64]    4   serial COM port index dword (factory default: 0 = COM1; range 0–3)
                              — read by SER_Initialize1; written by MOD_FindModemAndInit autodetect
-0x006C      [0x68]   84   modem phone number string (null-terminated, 84-byte field)
-                             — passed to _Dial_12 by MOD_DoConnect when param_2 == 0 (dial mode)
+0x006C      [0x68]   84   modem phone number / mode string (null-terminated, 84-byte field)
+                             — dial mode (param_2==0): holds dial number, passed to _Dial_12
+                             — listen mode (param_2≠0): RunModemConfigurationScreen writes "LISTEN"
 0x00C0      [0xbc]    4   modem COM port index dword (factory default: 8 = autodetect)
                              0–7 = COM1–COM8 (explicit); 8 = autodetect (MOD_Initialize1 scans registry)
                              range valid: 0–8 checked by MOD_Initialize
-                   ~~~~  [0xc0]–[0xcf]: 16 bytes — unknown; zeroed in NET.DAT; present in MODEM.DAT
-                          only. Possibly entry count or modem phone-book header. Requires
-                          MODEM.DAT differential save (add/remove entries) to confirm.
-0x00D4      [0xd0]  0x280 phone book player names: 8 × 0x50 bytes null-terminated strings
+0x00C4      [0xc0]  0x280 phone book player names: 8 × 0x50-byte null-terminated strings (slots 0–7)
                            — MODEM.DAT only; zeroed in NET.DAT; edited by RunModemConfigurationScreen
-0x0354      [0x350] 0x280 phone book phone numbers: 8 × 0x50 bytes null-terminated strings
+                           — slot n starts at CN_INFO[0xc0 + n×0x50]; stride confirmed by differential save
+0x0344      [0x340] 0x280 phone book phone numbers: 8 × 0x50-byte null-terminated strings (slots 0–7)
                            — MODEM.DAT only; zeroed in NET.DAT; edited by RunModemConfigurationScreen
-                   ~~~~  [0x5d0]–[0x8e3]: ~0x314 bytes — unknown; zeroed in NET.DAT. Possibly
-                          additional modem init strings or serial config data. Requires MODEM.DAT /
-                          SERIAL.DAT differential save to confirm.
+                           — slot n starts at CN_INFO[0x340 + n×0x50]; stride confirmed by differential save
+0x05C4      [0x5c0] 0x324 (unused padding) — all-zero in every tested MODEM.DAT capture (0–8
+                           phone-book entries, callsign set, transport set to modem, Call and
+                           Answer modes both exercised). FA's modem config screen has no Advanced
+                           Setup dialog; no UI path writes to this range. Confirmed unreachable.
 0x08E8      [0x8e4]   8   IP address hex string — 8 ASCII hex chars, e.g. "c0a80101" for 192.168.1.1
                            (null-checkable; if [0x8e4]==0 then IP/MAC binary fields are zeroed)
 0x08F0      [0x8ec]  13   MAC/IPX node hex string — 12 ASCII hex chars + null, e.g. "001122334455"
